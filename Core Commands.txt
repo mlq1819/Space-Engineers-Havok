@@ -1,0 +1,185 @@
+List of intra-ship commands:
+CoreDirective:
+
+
+CoreDiagnostics:
+	Started
+		indicates that the core has begun running
+	PowerAdequate<time>
+		indicates when power is high (at least 12 hours)
+		time indicates time in hours before power is depleted
+	PowerLow<time>
+		indicates when power is low (below 2 hours)
+		time indicates time in hours before power is depleted
+	PowerCritical<time>
+		indicates when power is very low (below 0.5 hours)
+		time indicates time in hours before power is depleted
+	RequestAdequate(componentname " " count " of " ideal)
+		indicates when there are sufficient resources to function (count >= ideal)
+		componentname is the componentname as according to Type.SubtypeId
+		count is the current count in the ship
+		ideal is the ideal count in the ship
+	RequestLow(componentname " " count " of " ideal)
+		indicates when the ship is running low on a resource (count < ideal / 2)
+		componentname is the componentname as according to Type.SubtypeId
+		count is the current count in the ship
+		ideal is the ideal count in the ship
+	RequestCritical(componentname " " count " of " ideal)
+		indicates when the ship is running low on a resource (count < ideal / 5)
+		componentname is the componentname as according to Type.SubtypeId
+		count is the current count in the ship
+		ideal is the ideal count in the ship
+	Docking<status>
+		indicates a change in the ships docking status
+		status is any of the following: "Docked", "Dockable", "Undocked", "Undockable"
+	Locking<status>
+		indicates a change in the ships locking status
+		status is any of the following: "Locked", "Lockable", "Unlocked", "Unlockable"
+	Report<"CargoUnloaded " name " at " percent>
+		indicates that the fill percentage of a particular cargo container has lowered
+		name is the name of the cargo container
+		percent is its current fill percent
+	Report<"CargoLoaded " name " at " percent>
+		indicates that the fill percentage of a particular cargo container has raised
+		name is the name of the cargo container
+		percent is its current fill percent
+	Report<"Broke " name " at " percent>
+		indicates that an important system has lost components or that components in the system have become dysfunctional
+		name is the name of the system as determined by CoreDiagnostics
+		percent is its current percentage of functional components
+	Report<"Fixed " name " at " percent>
+		indicates that an important system has gained components or that dysfunctional components in the system have become functional
+		name is the name of the system as determined by CoreDiagnostics
+		percent is its current percentage of functional components
+	
+CoreNavigation:
+	Started
+		indicates that the core has begun running
+	Invalid<Connector>
+		indicates that the ship does not have a connector that can be used to dock
+	Missing<Connector>
+		indicates that the ship does not have any connectors
+	HostileFighter<ID ";(" position ");(" velocity ")">
+		reports a detected hostile small grid
+		ID is the entity ID of the detected grid (doesn't change)
+		position is the center position of the detected grid
+		velocity is the current velocity of the detected grid
+	HostileFrigate<ID ";(" position ");(" velocity ")">
+		reports a detected hostile large grid
+		ID is the entity ID of the detected grid (doesn't change)
+		position is the center position of the detected grid
+		velocity is the current velocity of the detected grid
+	HostileOrganic<ID ";(" position ");(" velocity ")">
+		reports a detected hostile character
+		ID is the entity ID of the detected character (doesn't change)
+		position is the position of the detected character
+		velocity is the current velocity of the detected character
+	ScrapFighter<ID ";(" position ");(" velocity ")">
+		reports a detected neutral or unowned small grid
+		ID is the entity ID of the detected grid (doesn't change)
+		position is the position of the detected grid
+		velocity is the current velocity of the detected grid
+	ScrapFrigate<ID ";(" position ");(" velocity ")">
+		reports a detected neutral or unowned large grid
+		ID is the entity ID of the detected grid (doesn't change)
+		position is the position of the detected grid
+		velocity is the current velocity of the detected grid
+	ScrapObject<ID ";(" position ");(" velocity ")">
+		reports a detected floating object
+		ID is the entity ID of the detected object (doesn't change)
+		position is the position of the detected object
+		velocity is the current velocity of the detected object
+	Asteroid<ID ";(" position ")">
+		reports a detected asteroid
+		ID is the entity ID of the detected object (doesn't change)
+		position is the position of the detected asteroid (doesn't change)
+	Report<"((" position ");(" direction "))">
+		reports the ship's current position and direction
+		position is the position of the ship's core remote
+		direction is a normalized vector in the direction of the directive core
+	Reached<"(" connector_position ");" range>
+		reports that the ship has reached its current waypoint
+		position is the position of the connector
+		range is the distance between the ship's connector and core remote
+	Gravity<"(" gravity ")">
+		reports that the ship has entered a natural gravity field
+		gravity is the gravity vector (points towards the gravity source)
+
+CoreCommunications:
+	Started
+		indicates that the core has begun running
+	Receive<message>
+		indicates that a message was received
+		message is the data contained within the message (not the tag or source)
+
+CoreStrategy:
+	Started
+		indicates that the core has begun running
+	Send<Tag ";" Message>
+		passes a message to the Communications core to be processed
+		Tag is the tag to send the message on
+		Message is the message to be sent
+	Send<Tag ";" Command ":" Data>
+		passes a command message to the Communications core to be processed
+		Tag is the tag to send the message on
+		Command is the command being sent
+		Data is the command data being sent
+	GoTo<"(" Destination ")"
+		instructs the Navigation core to go to the destination
+		Destination is the target location
+	Docked<>
+		tells the Navigation core that the ship has docked
+	Evasion<On/Off>
+		tells the Navigation core to start/stop evasive maneuvers
+
+List of inter-ship commands:
+	Send(CoreIdentification, "Status", Status)
+		Reports a change in the ship's Status
+		Status is the ship's status
+	Send(CoreIdentification, "Arrived", "(" position ")")
+		reports that the ship has arrived and is at the listed position
+		position is the ship's current position
+	Send(CoreIdentification, "Returned", "(" position ")")
+		reports that the ship has returned and is at the listed position
+		position is the ship's current position
+	Send(CoreIdentification, "Position", Data)
+		passes the navigation position report to other ships
+		Data is the navigation position report data containing the ship's position
+	Send("Havok Open Channel", "Gravity", "(" position ")")
+		reports the presence and strength of a natural gravity field at the ship's position
+		position is the ship's current position
+	Send(CoreIdentification, "Damaged", system)
+		reports that a specific system has taken damage
+		system is the name of the damaged system as named by Diagnostics
+	Send(CoreIdentification, "Fixed", system)
+		reports that a specific system has fully repaired a damaged system
+		system is the name of the fully repaired system as named by Diagnostics
+	Send(CoreIdentification, "Power", subcommand)
+		reports an update in the power status of the ship
+		subcommand is one of the following: "Adequate", "Low", and "Critical", based on Diagnostics
+	Send(CoreIdentification, "ComponentAdequate", Component)
+		reports that the ship has adequate reserves of the given component
+		Component is the component name as according to Type.SubtypeId
+	Send(CoreIdentification, "ComponentLow", Component)
+		reports that the ship is running low on the given component and sends a request for resupply
+		Component is the component name as according to Type.SubtypeId
+	Send(CoreIdentification, "ComponentCritical", Component)
+		reports that the ship is running out of the given component and sends a request for resupply
+		Component is the component name as according to Type.SubtypeId
+	Send(CoreIdentification, "Docking", DockStatus)
+		reports a change in the ship's docking status
+		DockStatus is one of the following: "Docked", "Dockable", "Undocked", "Undockable"
+	Send(CoreIdentification, "Locking", LockStatus)
+		reports a change in the ship's locking status
+		DockStatus is one of the following: "Locked", "Lockable", "Unlocked", "Unlockable"
+	Send(ShipClass, "NewID", CoreIdentification)
+		reports that a ship of the given ShipClass has received a new CoreIdentification
+	Send("Havok Open Channel", "Salvage", CoreIdentification)
+		reports that the ship with the given CoreID is dysfunctional and should be salvaged
+	Send(CoreIdentification, "Follow", "(" Position ");(" Velocity ")")
+		tells the ship with the CoreIdentification to follow a ship relative to its current position along the velocity vector
+		Position is the position that the ship should attempt to follow at
+		Velocity is the velocity of the ship to follow
+
+
+
