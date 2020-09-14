@@ -76,6 +76,7 @@ private bool follow_collision = true;
 private bool following = false;
 private long tracking_ID = 0;
 private bool tracking = false;
+private bool did_follow = false;
 
 private void AddPrint(string message, bool AddToHistory){
 	toEcho += message + '\n';
@@ -681,6 +682,8 @@ private void PerformEvasion(){
 }
 
 private void PerformFollowing(){
+	if(did_follow)
+		return;
 	Vector3D target_position = 2 * follow_velocity * CoreTimer.TriggerDelay + follow_position;
 	Vector3D expected_position = follow_position + (follow_velocity * CoreTimer.TriggerDelay);
 	double speed = follow_velocity.Length();
@@ -704,6 +707,7 @@ private void PerformFollowing(){
 	CoreRemote.SetCollisionAvoidance(follow_collision);
 	CoreRemote.SetDockingMode(false);
 	CoreRemote.SetAutoPilotEnabled(true);
+	did_follow = true;
 }
 
 private void PerformTracking(){
@@ -740,6 +744,7 @@ private void PerformTracking(){
 
 public void Main(string argument, UpdateType updateSource)
 {
+	did_follow = false;
 	long CoreIDNumber = 0;
 	if(CoreIdentification.Contains('-'))
 		CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
