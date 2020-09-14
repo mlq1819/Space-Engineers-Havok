@@ -129,6 +129,9 @@ CoreStrategy:
 	GoTo<"(" Destination ")"
 		instructs the Navigation core to go to the destination
 		Destination is the target location
+	Dock<"(" Dock ")">
+		instructions the Navigation core to dock with the connector at the given position
+		Dock is the coordinates of the connector
 	Docked<>
 		tells the Navigation core that the ship has docked
 	Evasion<On/Off>

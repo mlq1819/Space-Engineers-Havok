@@ -328,6 +328,8 @@ public void StartPerformTask(){
 			//TODO - Write devouring data (looking around, maybe some requests, grinding); definitely uses an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
+		
+		
 		case ActiveTask.Docking:
 			if(DockPort==null){
 				UpdateStatus(DroneStatus.Waiting);
@@ -339,15 +341,20 @@ public void StartPerformTask(){
 				}
 			}
 			else{
-				if(Dockable){
-					Docked = Docked || Dock();
+				if(Dockable || Docked){
+					if(Dockable)
+						Docked = Docked || Dock();
+					if(Docked){
+						CoreNavigation.TryRun(CoreName + ":Docked<>");
+						CurrentTask = ActiveTask.Refueling;
+						UpdateStatus(DroneStatus.Performing);
+						Strategize();
+						return;
+					}
 				}
-				if(Docked){
-					CoreNavigation.TryRun(CoreName + ":Docked<>");
-					CurrentTask = ActiveTask.Refueling;
-					UpdateStatus(DroneStatus.Performing);
-					Strategize();
-					return;
+				else {
+					CoreNavigation.TryRun(CoreName + ":Dock<(" + DockPort.ToString() + ")>");
+					AddPrint("Initiating docking maneuvers with (" + DockPort.ToString() + ")", true);
 				}
 			}
 			break;
@@ -555,7 +562,6 @@ private void HasArrived(Vector3D position){
 			break;
 		case ActiveTask.Delivering:
 			CurrentTask = ActiveTask.Docking;
-			
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Attacking:
@@ -590,9 +596,7 @@ private void HasArrived(Vector3D position){
 private void HasReturned(Vector3D position){
 	switch(CurrentTask){
 		case ActiveTask.Docking:
-			if(DockPort != null && (DockPort - position).Length() < 5){
-				Dock();
-			}
+			UpdateStatus(DroneStatus.Performing);
 			break;
 		default:
 			UpdateStatus(DroneStatus.Idle);
@@ -642,6 +646,30 @@ private void SourceNavigation(string Command, string Data){
 		}
 		else if(Status == DroneStatus.Venturing){
 			HasArrived(Position);
+		}
+	}
+	else if(Command.ToLower().Equals("invalid")){
+		if(Data.ToLower().Equals("connector")){
+			AddPrint("No valid connectors; ship cannot refuel or perform useful tasks");
+			UpdateStatus(DroneStatus.Salvage);
+		}
+	}
+	else if(Command.ToLower().Equals("missing")){
+		if(Data.ToLower().Equals("connector")){
+			AddPrint("No connectors; ship cannot refuel or perform useful tasks");
+			UpdateStatus(DroneStatus.Salvage);
+		}
+		else if(Data.ToLower().Equals("sensor")){
+			Send(CoreIdentification, "Missing", "Sensor");
+			AddPrint("No valid sensors detected");
+			CurrentTask = ActiveTask.None;
+			UpdateStatus(DroneStatus.Waiting);
+		}
+		else if(Data.ToLower().Equals("landinggear")){
+			Send(CoreIdentification, "Missing", "LandingGear");
+			AddPrint("No landing gear detected");
+			CurrentTask = ActiveTask.None;
+			UpdateStatus(DroneStatus.Waiting);
 		}
 	}
 }

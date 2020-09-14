@@ -154,6 +154,8 @@ public void InitializeCounts(){
 	Status.Add("landinggear", new DTuple(GetWorking(AllBlocks), GetWorking(AllBlocks)));
 	GridTerminalSystem.GetBlocksOfType<IMyLaserAntenna>(AllBlocks);
 	Status.Add("laserantenna", new DTuple(GetWorking(AllBlocks), GetWorking(AllBlocks)));
+	GridTerminalSystem.GetBlocksOfType<IMySensorBlock>(AllBlocks);
+	Status.Add("sensor", new DTuple(GetWorking(AllBlocks), GetWorking(AllBlocks)));
 }
 
 public void RetrievalHelper(string line){
@@ -198,9 +200,9 @@ public void SetBlocks(){
 				BlocksSet = false;
 				AddPrint("Retrieved CoreIdentification; set to \"" + CoreIdentification + "\"", true);
 			}
-			long CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
+			long CoreIDNumber = Int64.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
 			if(CoreIDNumber == 0){
-				AddPrint("Currently in Factory Default Settings");
+				AddPrint("Currently in Factory Default Settings", true);
 				FinalPrint();
 				exit(0);
 				return;
@@ -931,6 +933,9 @@ private bool CriticalDiagnostics(){
 	DiagHelper(key, GetWorking(AllBlocks));
 	GridTerminalSystem.GetBlocksOfType<IMyLaserAntenna>(AllBlocks);
 	key = "laserantenna";
+	DiagHelper(key, GetWorking(AllBlocks));
+	GridTerminalSystem.GetBlocksOfType<IMySensorBlock>(AllBlocks);
+	key = "sensor";
 	DiagHelper(key, GetWorking(AllBlocks));
 	return found_update;
 }
