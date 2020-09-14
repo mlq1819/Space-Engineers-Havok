@@ -57,8 +57,9 @@ CoreNavigation:
 		indicates that the core has begun running
 	Invalid<Connector>
 		indicates that the ship does not have a connector that can be used to dock
-	Missing<Connector>
-		indicates that the ship does not have any connectors
+	Missing< SystemComponentName >
+		indicates that the ship does not have the required system
+		SystemComponentName is the name of a single component of the required system
 	HostileFighter<ID ";(" position ");(" velocity ")">
 		reports a detected hostile small grid
 		ID is the entity ID of the detected grid (doesn't change)
@@ -104,6 +105,7 @@ CoreNavigation:
 	Gravity<"(" gravity ")">
 		reports that the ship has entered a natural gravity field
 		gravity is the gravity vector (points towards the gravity source)
+	
 
 CoreCommunications:
 	Started
@@ -131,61 +133,92 @@ CoreStrategy:
 		tells the Navigation core that the ship has docked
 	Evasion<On/Off>
 		tells the Navigation core to start/stop evasive maneuvers
+	Follow<"(" Position ");(" Velocity ")">
+		tells the Navigation core to follow a target currently at position and velocity
+		Position is the position to try to be near that is close to some target of interest
+		Velocity is the current velocity of the target to match
+	Track< EntityID ";(" Position ");(" Velocity ")">
+		tells the Navigation core to attempt to track down and lock onto a target current at position and velocity
+		EntityID is the EntityId for the scanners, or 0 if unknown
+		Position is the position to try to scan for
+		Velocity is the target's velocity
+
+CoreLogistics:
+	Started
+		indicates that the core has begun running
+
 
 List of inter-ship commands:
-	Send(CoreIdentification, "Status", Status)
-		Reports a change in the ship's Status
-		Status is the ship's status
-	Send(CoreIdentification, "Arrived", "(" position ")")
-		reports that the ship has arrived and is at the listed position
-		position is the ship's current position
-	Send(CoreIdentification, "Returned", "(" position ")")
-		reports that the ship has returned and is at the listed position
-		position is the ship's current position
-	Send(CoreIdentification, "Position", Data)
-		passes the navigation position report to other ships
-		Data is the navigation position report data containing the ship's position
-	Send("Havok Open Channel", "Gravity", "(" position ")")
-		reports the presence and strength of a natural gravity field at the ship's position
-		position is the ship's current position
-	Send(CoreIdentification, "Damaged", system)
-		reports that a specific system has taken damage
-		system is the name of the damaged system as named by Diagnostics
-	Send(CoreIdentification, "Fixed", system)
-		reports that a specific system has fully repaired a damaged system
-		system is the name of the fully repaired system as named by Diagnostics
-	Send(CoreIdentification, "Power", subcommand)
-		reports an update in the power status of the ship
-		subcommand is one of the following: "Adequate", "Low", and "Critical", based on Diagnostics
-	Send(CoreIdentification, "ComponentAdequate", Component)
-		reports that the ship has adequate reserves of the given component
-		Component is the component name as according to Type.SubtypeId
-	Send(CoreIdentification, "ComponentLow", Component)
-		reports that the ship is running low on the given component and sends a request for resupply
-		Component is the component name as according to Type.SubtypeId
-	Send(CoreIdentification, "ComponentCritical", Component)
-		reports that the ship is running out of the given component and sends a request for resupply
-		Component is the component name as according to Type.SubtypeId
-	Send(CoreIdentification, "Docking", DockStatus)
-		reports a change in the ship's docking status
-		DockStatus is one of the following: "Docked", "Dockable", "Undocked", "Undockable"
-	Send(CoreIdentification, "Locking", LockStatus)
-		reports a change in the ship's locking status
-		DockStatus is one of the following: "Locked", "Lockable", "Unlocked", "Unlockable"
-	Send(ShipClass, "NewID", CoreIdentification)
-		reports that a ship of the given ShipClass has received a new CoreIdentification
-	Send("Havok Open Channel", "Salvage", CoreIdentification)
-		reports that the ship with the given CoreID is dysfunctional and should be salvaged
-	Send(CoreIdentification, "Follow", "(" Position ");(" Velocity ")")
-		tells the ship with the CoreIdentification to follow a ship relative to its current position along the velocity vector
-		Position is the position that the ship should attempt to follow at
-		Velocity is the velocity of the ship to follow
-	Send(CoreIdentification, "Attack", "Request")
-		sends out a combat attack request to a command ship to find out what to attack
-	Send(CoreIdentification, "Attack", "(" Position ");(" Velocity ")")
-		tells the ship with the given CoreIdentification to attack the target with the given position and velocity
-		Position is the current position of the target to attack
-		Velocity is the current velocity of the target to attack
-	
+	Reports/Requests:
+		Send(CoreIdentification, "Status", Status)
+			Reports a change in the ship's Status
+			Status is the ship's status
+		Send(CoreIdentification, "Arrived", "(" position ")")
+			reports that the ship has arrived and is at the listed position
+			position is the ship's current position
+		Send(CoreIdentification, "Returned", "(" position ")")
+			reports that the ship has returned and is at the listed position
+			position is the ship's current position
+		Send(CoreIdentification, "Position", Data)
+			passes the navigation position report to other ships
+			Data is the navigation position report data containing the ship's position
+		Send("Havok Open Channel", "Gravity", "(" position ")")
+			reports the presence and strength of a natural gravity field at the ship's position
+			position is the ship's current position
+		Send(CoreIdentification, "Damaged", system)
+			reports that a specific system has taken damage
+			system is the name of the damaged system as named by Diagnostics
+		Send(CoreIdentification, "Fixed", system)
+			reports that a specific system has fully repaired a damaged system
+			system is the name of the fully repaired system as named by Diagnostics
+		Send(CoreIdentification, "Power", subcommand)
+			reports an update in the power status of the ship
+			subcommand is one of the following: "Adequate", "Low", and "Critical", based on Diagnostics
+		Send(CoreIdentification, "ComponentAdequate", Component)
+			reports that the ship has adequate reserves of the given component
+			Component is the component name as according to Type.SubtypeId
+		Send(CoreIdentification, "ComponentLow", Component)
+			reports that the ship is running low on the given component and sends a request for resupply
+			Component is the component name as according to Type.SubtypeId
+		Send(CoreIdentification, "ComponentCritical", Component)
+			reports that the ship is running out of the given component and sends a request for resupply
+			Component is the component name as according to Type.SubtypeId
+		Send(CoreIdentification, "Docking", DockStatus)
+			reports a change in the ship's docking status
+			DockStatus is one of the following: "Docked", "Dockable", "Undocked", "Undockable"
+		Send(CoreIdentification, "Locking", LockStatus)
+			reports a change in the ship's locking status
+			DockStatus is one of the following: "Locked", "Lockable", "Unlocked", "Unlockable"
+		Send(ShipClass, "NewID", CoreIdentification)
+			reports that a ship of the given ShipClass has received a new CoreIdentification
+		Send("Havok Open Channel", "Salvage", CoreIdentification)
+			reports that the ship with the given CoreID is dysfunctional and should be salvaged
+		Send(CoreIdentification, "Attack", "Request")
+			sends out a combat attack request to a command ship to find out what to attack
+		Send(CoreIdentificaiton, "DockingInfo", "(" Position ");(" Dock ")")
+			reports docking information
+			Position is a position to align with docking
+			Dock is the position of the connector
+	Commands/Updates:
+		Send(CoreIdentification, "Attack", "(" Position ");(" Velocity ")")
+			tells the ship with the given CoreIdentification to attack the target with the given position and velocity
+			Position is the current position of the target to attack
+			Velocity is the current velocity of the target to attack
+		Send(CoreIdentification, "Follow", "(" Position ");(" Velocity ")")
+			tells the ship with the CoreIdentification to follow a ship relative to its current position along the velocity vector
+			Position is the position that the ship should attempt to follow at
+			Velocity is the velocity of the ship to follow
+		Send(CoreIdentification, "Deliver", "(" Position ");(" Dock ")")
+			tells the ship to deliver supplies to the given position and dock with the given port
+			Position is the position to align with before docking
+			Dock is the position of the target connector
+		Send(CoreIdentification, "RequestReport", "DockingInfo")
+			requests the position of a ship's connector to dock with
+		Send(CoreIdentification, "Resupply", "(" Position ");(" Dock ")")
+			tells the ship to fly to the given position and dock with the given port to resupply
+			Position is the position to align with before docking
+			Dock is the position of the target connector
+
+
 
 

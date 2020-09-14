@@ -61,6 +61,7 @@ private IMyBatteryBlock CoreBattery = null;
 private IMyShipConnector CoreConnector = null;
 private IMyTimerBlock CoreTimer = null;
 private List<IMySensorBlock> Sensors = new List<IMySensorBlock>();
+private List<IMyLandingGear> LandingGear = new List<IMyLandingGear>();
 
 private List<VTuple> position_history = new List<VTuple>();
 private List<MyDetectedEntityInfo> detected_entities = new List<MyDetectedEntityInfo>();
@@ -71,7 +72,10 @@ private uint hostile = 0;
 private bool evasion = false;
 private Vector3D follow_position;
 private Vector3D follow_velocity;
+private bool follow_collision = true;
 private bool following = false;
+private long tracking_ID = 0;
+private bool tracking = false;
 
 private void AddPrint(string message, bool AddToHistory){
 	toEcho += message + '\n';
@@ -246,6 +250,11 @@ public void SetSensors(){
 	GridTerminalSystem.GetBlocksOfType<IMySensorBlock>(Sensors);
 }
 
+public void SetLandingGear(){
+	LandingGear.Clear();
+	GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(LandingGear);
+}
+
 public void SetBlocks(){
 	try{
 		if(Me.CustomData.Equals("") || CoreIdentification.Equals("")){ //Not ready to run yet
@@ -332,6 +341,7 @@ public void SetBlocks(){
 				SetConnector();
 				SetTimer();
 				SetSensors();
+				SetLandingGear();
 				Runtime.UpdateFrequency = UpdateFrequency.Update100;
 			}
 		}
@@ -411,12 +421,6 @@ public void Save()
 		string output = '<' + position_history[i].Item1.ToString() + ';' + position_history[i].Item2.ToString() + '>';
 		this.Storage += output + '\n';
 	}
-	// Called when the program needs to save its state. Use
-    // this method to save your state to the Storage field
-    // or some other means. 
-    // 
-    // This method is optional and can be removed if not
-    // needed.
 }
 
 /*
@@ -697,9 +701,41 @@ private void PerformFollowing(){
 	CoreRemote.FlightMode = FlightMode.OneWay;
 	CoreRemote.ClearWaypoints();
 	CoreRemote.AddWaypoint(target_position, "Chase");
-	CoreRemote.SetCollisionAvoidance(true);
+	CoreRemote.SetCollisionAvoidance(follow_collision);
 	CoreRemote.SetDockingMode(false);
 	CoreRemote.SetAutoPilotEnabled(true);
+}
+
+private void PerformTracking(){
+	double distance = double.MaxValue;
+	foreach(IMyLandingGear Gear in LandingGear){
+		distance = Math.Min(distance, (Gear.GetPosition() - follow_position).Length());
+	}
+	following = true;
+	if(distance > 5){
+		follow_collision = true;
+		foreach(IMyLandingGear Gear in LandingGear){
+			Gear.AutoLock = false;
+		}
+	}
+	else {
+		bool connected = false;
+		follow_collision = false;
+		foreach(IMyLandingGear Gear in LandingGear){
+			Gear.AutoLock = true;
+			Gear.Lock();
+			if(Gear.IsLocked){
+				connected = true;
+				break;
+			}
+		}
+		if(connected){
+			following = false;
+			tracking = false;
+			CoreRemote.ClearWaypoints();
+			CoreRemote.SetAutoPilotEnabled(false);
+		}
+	}
 }
 
 public void Main(string argument, UpdateType updateSource)
@@ -924,7 +960,51 @@ public void Main(string argument, UpdateType updateSource)
 					z = double.Parse(Data.Substring(start, end).Trim());
 					follow_velocity = new Vector3D(x,y,z);
 					following = true;
+					follow_collision = true;
 					PerformFollowing();
+				}
+				else if(Command.ToLower().Equals("tracking")){
+					if(AllSensors.Count > 1 && LandingGear.Count > 0){
+						start = 0;
+						end = Data.Substring(start).IndexOf(';')
+						tracking_ID = Int64.Parse(Data.Substring(start,end).Trim());
+						start+=end+1;
+						start = Data.Substring(start).IndexOf('(')+1;
+						end = Data.Substring(start).IndexOf(',');
+						double x = double.Parse(Data.Substring(start, end).Trim());
+						start += end+1;
+						end = Data.Substring(start).IndexOf(',');
+						double y = double.Parse(Data.Substring(start, end).Trim());
+						start += end+1;
+						end = Data.Substring(start).IndexOf(')');
+						double z = double.Parse(Data.Substring(start, end).Trim());
+						follow_position = new Vector3D(x,y,z);
+						start = Data.Substring(start).IndexOf('(')+1;
+						end = Data.Substring(start).IndexOf(',');
+						x = double.Parse(Data.Substring(start, end).Trim());
+						start += end+1;
+						end = Data.Substring(start).IndexOf(',');
+						y = double.Parse(Data.Substring(start, end).Trim());
+						start += end+1;
+						end = Data.Substring(start).IndexOf(')');
+						z = double.Parse(Data.Substring(start, end).Trim());
+						follow_velocity = new Vector3D(x,y,z);
+						following = true;
+						tracking = true;
+						PerformTracking();
+						PerformFollowing();
+					}
+					else{
+						if(AllSensors.Count < 2){
+							AddPrint("Cannot perform tracking; no valid sensors");
+							CoreStrategy.TryRun(CoreName + ":Missing<Sensor>");
+						}
+						else{
+							AddPrint("Cannot perform tracking; no landing gear");
+							CoreStrategy.TryRun(CoreName + ":Missing<LandingGear>");
+						}
+						
+					}
 				}
 			}
 			else if(Source.Equals("Timer")){
@@ -935,6 +1015,8 @@ public void Main(string argument, UpdateType updateSource)
 				if(evasion && (old_time % 10) != ((long)(old_time+CoreTimer.TriggerDelay) % 10)){
 					PerformEvasion();
 				}
+				if(tracking)
+					PerformTracking();
 				if(following)
 					PerformFollowing();
 			}
@@ -944,6 +1026,13 @@ public void Main(string argument, UpdateType updateSource)
 			bool found_update = false;
 			FillDetectedEntities();
 			foreach(MyDetectedEntityInfo entity in detected_entities){
+				if(tracking){
+					if(tracking_ID != 0 && tracking_ID == tracking_entity.EntityId){
+						follow_position = entity.HitPosition;
+						follow_velocity = entity.Velocity;
+						PerformTracking();
+					}
+				}
 				if(entity.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies){
 					switch(entity.Type){
 						case MyDetectedEntityType.SmallGrid:

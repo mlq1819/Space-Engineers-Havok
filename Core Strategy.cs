@@ -352,7 +352,6 @@ public void StartPerformTask(){
 			}
 			break;
 		case ActiveTask.Attacking:
-			//TODO - Write attacking data (mostly setting navigation to follow an enemy target and performing random vector thrusting to throw off targeting)
 			if(ready_follow){
 				CoreNavigation.TryRun(CoreName + ":Follow<(" + follow_position.ToString() + ");(" + follow_velocity.ToString() + ")>");
 				CoreNavigation.TryRun(CoreName + ":Evasion<On>");
@@ -398,8 +397,43 @@ public void StartPerformTask(){
 	}
 }
 
+//Called when a task was being performed and the ship status changed off of performing and/or criticaltask
 private void EndPerformTask(){
-	
+	switch(CurrentTask){
+		case ActiveTask.Salvaging:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Devouring:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Refueling:
+			Undock();
+			break;
+		case ActiveTask.Attacking:
+			CoreNavigation.TryRun(CoreName + ":Evasion<Off>");
+			break;
+		case ActiveTask.Mining:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Building:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Printing:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Tracking:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Defending:
+			CoreNavigation.TryRun(CoreName + ":Evasion<Off>");
+			break;
+		case ActiveTask.Yelling:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+		case ActiveTask.Kamikaze:
+			//TODO; add logic for ending this task, regardless of the current status of the task
+			break;
+	}
 }
 
 public void UpdateStatus(DroneStatus new_status){
@@ -519,6 +553,11 @@ private void HasArrived(Vector3D position){
 		case ActiveTask.Devouring:
 			UpdateStatus(DroneStatus.Performing);
 			break;
+		case ActiveTask.Delivering:
+			CurrentTask = ActiveTask.Docking;
+			
+			UpdateStatus(DroneStatus.Performing);
+			break;
 		case ActiveTask.Attacking:
 			UpdateStatus(DroneStatus.Performing);
 			break;
@@ -605,7 +644,6 @@ private void SourceNavigation(string Command, string Data){
 			HasArrived(Position);
 		}
 	}
-	
 }
 
 private void SourceCommunications(string Command, string Data){
@@ -669,6 +707,32 @@ private void SourceCommunications(string Command, string Data){
 		AddPrint("Directed CoreNavigation to fly to (" + flyto.ToString() + ") to dock with (" + DockPort.ToString() + ")", true);
 		CurrentTask = ActiveTask.Docking;
 		Status = DroneStatus.Returning;
+	}
+	else if(Command.ToLower().Equals("deliver")){
+		int start = Data.IndexOf('(')+1;
+		int end = Data.Substring(start).IndexOf(',');
+		double x = double.Parse(Data.Substring(start, end).Trim());
+		start += end+1;
+		end = Data.Substring(start).IndexOf(',');
+		double y = double.Parse(Data.Substring(start, end).Trim());
+		start += end+1;
+		end = Data.Substring(start).IndexOf(')');
+		double z = double.Parse(Data.Substring(start, end).Trim());
+		Vector3D flyto = new Vector3D(x,y,z);
+		start = Data.Substring(start).IndexOf('(')+1;
+		end = Data.Substring(start).IndexOf(',');
+		x = double.Parse(Data.Substring(start, end).Trim());
+		start += end+1;
+		end = Data.Substring(start).IndexOf(',');
+		y = double.Parse(Data.Substring(start, end).Trim());
+		start += end+1;
+		end = Data.Substring(start).IndexOf(')');
+		z = double.Parse(Data.Substring(start, end).Trim());
+		DockPort = new Vector3D(x,y,z);
+		CoreNavigation.TryRun(CoreName + ":GoTo<(" + flyto.ToString() + ")>");
+		AddPrint("Directed CoreNavigation to fly to (" + flyto.ToString() + ") to dock with (" + DockPort.ToString() + ") and deliver resources", true);
+		CurrentTask = ActiveTask.Docking;
+		Status = DroneStatus.Venturing;
 	}
 	else if(Command.ToLower().Equals("attack")){
 		if(Data.ToLower().Equals("request")){
