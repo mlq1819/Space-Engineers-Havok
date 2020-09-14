@@ -180,6 +180,12 @@ List of inter-ship commands:
 		tells the ship with the CoreIdentification to follow a ship relative to its current position along the velocity vector
 		Position is the position that the ship should attempt to follow at
 		Velocity is the velocity of the ship to follow
-
+	Send(CoreIdentification, "Attack", "Request")
+		sends out a combat attack request to a command ship to find out what to attack
+	Send(CoreIdentification, "Attack", "(" Position ");(" Velocity ")")
+		tells the ship with the given CoreIdentification to attack the target with the given position and velocity
+		Position is the current position of the target to attack
+		Velocity is the current velocity of the target to attack
+		
 
 

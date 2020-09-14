@@ -332,6 +332,58 @@ public void UpdateStatus(DroneStatus new_status){
 				SetLights(new Color(255, 239, 137, 255));
 				break;
 			case DroneStatus.Performing:
+				switch(CurrentTask){
+					case ActiveTask.None:
+						UpdateStatus(DroneStatus.Idle);
+						break;
+					case ActiveTask.Scouting:
+						//TODO - Write scouting data
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Salvaging:
+						//TODO - Write salvaging data (looking around, maybe some requests, grinding); definately uses an additional core
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Devouring:
+						//TODO - Write devouring data (looking around, maybe some requests, grinding); definitely uses an additional core
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Attacking:
+						//TODO - Write attacking data (mostly setting navigation to follow an enemy target and performing random vector thrusting to throw off targeting)
+						if(Status != DroneStatus.Performing && Status != DroneStatus.Waiting && ((int) Status) < ((int)DroneStatus.Escaping)){
+							Send(CoreIdentification, "Attack", "Request");
+							UpdateStatus(DroneStatus.Waiting);
+						}
+						break;
+					case ActiveTask.Mining:
+						//TODO - Write mining data (scans, mining, etc); probably using an additional core
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Building:
+						//TODO - Write building data (idk); definitely uses an additional core
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Printing:
+						//TODO - Write printing data (idk); definitely uses an additional core
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Tracking:
+						//TODO - Write tacking data (scans, locking, etc); uses a call to Navigation
+						UpdateStatus(DroneStatus.Performing);
+						break;
+					case ActiveTask.Defending:
+						//TODO - Write defending data; (mostly just setting navigation to follow an enemy target and performing random vector thrusting to throw off targeting);
+						UpdateStatus(DroneStatus.CriticalTask);
+						break;
+					case ActiveTask.Yelling:
+						//TODO - Write yelling data (mostly just a call to navigations)
+						UpdateStatus(DroneStatus.CriticalTask);
+						break;
+					case ActiveTask.Kamikaze:
+						//TODO - Write Kamikaze program
+						UpdateStatus(DroneStatus.CriticalTask);
+						break;
+				}
 				SetLights(new Color(255, 239, 50, 255));
 				break;
 			case DroneStatus.Escaping:
@@ -405,49 +457,36 @@ private void HasArrived(Vector3D position){
 			UpdateStatus(DroneStatus.Idle);
 			break;
 		case ActiveTask.Scouting:
-			//TODO - Write scouting data
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Salvaging:
-			//TODO - Write salvaging data (looking around, maybe some requests, grinding); definately uses an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Devouring:
-			//TODO - Write devouring data (looking around, maybe some requests, grinding); definitely uses an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Attacking:
-			//TODO - Write attacking data (mostly setting navigation to follow an enemy target and performing random vector thrusting to throw off targeting)
-			//Should request combat data
-			CoreNavigation.TryRun(CoreName + ":Evasion<On>");
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Mining:
-			//TODO - Write mining data (scans, mining, etc); probably using an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Building:
-			//TODO - Write building data (idk); definitely uses an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Printing:
-			//TODO - Write printing data (idk); definitely uses an additional core
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Tracking:
-			//TODO - Write tacking data (scans, locking, etc); uses a call to Navigation
 			UpdateStatus(DroneStatus.Performing);
 			break;
 		case ActiveTask.Defending:
-			//TODO - Write defending data; (mostly just setting navigation to follow an enemy target and performing random vector thrusting to throw off targeting);
 			UpdateStatus(DroneStatus.CriticalTask);
 			break;
 		case ActiveTask.Yelling:
-			//TODO - Write yelling data (mostly just a call to navigations)
 			UpdateStatus(DroneStatus.CriticalTask);
 			break;
 		case ActiveTask.Kamikaze:
-			//TODO - Write Kamikaze program
 			UpdateStatus(DroneStatus.CriticalTask);
 			break;
 	}
@@ -577,6 +616,39 @@ private void SourceCommunications(string Command, string Data){
 		CurrentTask = ActiveTask.Docking;
 		Status = DroneStatus.Returning;
 	}
+	else if(Command.ToLower().Equals("attack")){
+		if(Data.ToLower().Equals("request")){
+			//TODO - perform attack request information using core logistics
+		}
+		else {
+			if(CurrentTask == ActiveTask.None || CurrentTask == ActiveTask.Attacking){
+				int start = Data.IndexOf('(')+1;
+				int end = Data.Substring(start).IndexOf(',');
+				double x = double.Parse(Data.Substring(start, end).Trim());
+				start += end+1;
+				end = Data.Substring(start).IndexOf(',');
+				double y = double.Parse(Data.Substring(start, end).Trim());
+				start += end+1;
+				end = Data.Substring(start).IndexOf(')');
+				double z = double.Parse(Data.Substring(start, end).Trim());
+				Vector3D position = new Vector3D(x,y,z);
+				start = Data.Substring(start).IndexOf('(')+1;
+				end = Data.Substring(start).IndexOf(',');
+				x = double.Parse(Data.Substring(start, end).Trim());
+				start += end+1;
+				end = Data.Substring(start).IndexOf(',');
+				y = double.Parse(Data.Substring(start, end).Trim());
+				start += end+1;
+				end = Data.Substring(start).IndexOf(')');
+				z = double.Parse(Data.Substring(start, end).Trim());
+				Vector3D velocity = new Vector3D(x,y,z);
+				CoreNavigation.TryRun(CoreName + ":Follow<(" + position.ToString() + ");(" + velocity.ToString() + ")>");
+				CoreNavigation.TryRun(CoreName + ":Evasion<On>");
+				AddPrint("Commanding Navigation to follow position (" + position.ToString() + ") moving at (" + velocity.ToString() + ")", true);
+			}
+		}
+	}
+	
 }
 
 private void SourceDiagnostics(string Command, string Data){
