@@ -186,6 +186,6 @@ List of inter-ship commands:
 		tells the ship with the given CoreIdentification to attack the target with the given position and velocity
 		Position is the current position of the target to attack
 		Velocity is the current velocity of the target to attack
-		
+	
 
 
