@@ -307,7 +307,6 @@ public void Initialize()
 
 public Program(){
 	try{
-		ShipName = Me.CubeGrid.CustomName;
 		if(ConfirmCoreName()){
 			Initialize();
 		} else {
@@ -347,7 +346,7 @@ private void Wipe(){
 	Initialize();
 }
 
-public void Main(string argument, UpdateType updateSource)
+public void Run(string argument, UpdateType updateSource)
 {
 	if(argument.ToLower().Equals("wipe")){
 		if(CoreStrategy != null){
@@ -496,4 +495,15 @@ public void Main(string argument, UpdateType updateSource)
 		}
 	}
 	FinalPrint();
+}
+
+public void Main(string argument, UpdateType updateSource){
+	try{
+		Run(argument, updateSource);
+	}
+	catch(Exception e){
+		AddPrint("Exception:\n" + e.Message, true);
+		BlocksSet = false;
+		FinalPrint();
+	}
 }

@@ -749,7 +749,7 @@ private void PerformTracking(){
 	}
 }
 
-public void Main(string argument, UpdateType updateSource)
+public void Run(string argument, UpdateType updateSource)
 {
 	did_follow = false;
 	int CoreIDNumber = 0;
@@ -1132,4 +1132,15 @@ public void Main(string argument, UpdateType updateSource)
 		AddPrint("Cannot run program --- blocks not set!", false);
 	}
 	FinalPrint();
+}
+
+public void Main(string argument, UpdateType updateSource){
+	try{
+		Run(argument, updateSource);
+	}
+	catch(Exception e){
+		AddPrint("Exception:\n" + e.Message, true);
+		BlocksSet = false;
+		FinalPrint();
+	}
 }

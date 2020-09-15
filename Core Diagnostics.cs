@@ -964,7 +964,7 @@ private void RunDiagnostics(string argument){
 	}
 }
 
-public void Main(string argument, UpdateType updateSource)
+public void Run(string argument, UpdateType updateSource)
 {
 	int CoreIDNumber = 0;
 	if(CoreIdentification.Contains('-'))
@@ -1021,4 +1021,15 @@ public void Main(string argument, UpdateType updateSource)
 		AddPrint("Cannot run program --- blocks not set!", false);
 	}
 	FinalPrint();
+}
+
+public void Main(string argument, UpdateType updateSource){
+	try{
+		Run(argument, updateSource);
+	}
+	catch(Exception e){
+		AddPrint("Exception:\n" + e.Message, true);
+		BlocksSet = false;
+		FinalPrint();
+	}
 }
