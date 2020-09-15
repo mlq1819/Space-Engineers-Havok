@@ -32,6 +32,7 @@ private IMyProgrammableBlock CoreDirective = null;
 private string toEcho = "";
 private char loadingChar = '|';
 private List<string> message_history = new List<string>();
+private List<string> argument_history = new List<string>();
 private bool BlocksSet = false;
 private long Cycle = 0;
 private long Long_Cycle = 1;
@@ -53,6 +54,20 @@ private void AddPrint(string message, bool AddToHistory){
 
 private void FinalPrint(){
 	toEcho = "Cycle " + Long_Cycle + '-' + (++Cycle) + "\nCoreIdentification: " + CoreIdentification + '\n' + toEcho;
+	if(argument_history.Count > 50){
+		List<string> new_history = new List<string>();
+		for(int i=25; i<argument_history.Length; i++){
+			new_history.Add(argument_history[i]);
+		}
+		argument_history = new_history;
+	}
+	if(message_history.Count > 20){
+		List<string> new_history = new List<string>();
+		for(int i=10; i<message_history.Length; i++){
+			new_history.Add(message_history[i]);
+		}
+		message_history = new_history;
+	}
 	if(Cycle >= Int64.MaxValue){
 		Cycle = 0;
 		Long_Cycle = (Long_Cycle+1)%Int64.MaxValue;
@@ -61,6 +76,12 @@ private void FinalPrint(){
 		AddPrint("\n\n\nConsole History:", false);
 		for(int i=Math.Min(message_history.Count-1, 10); i>=0; i--){
 			AddPrint("\t" + message_history[i] + "\n------------", false);
+		}
+	}
+	if(argument_history.Count > 0){
+		AddPrint("\n\n\nArgument History:", false);
+		for(int i=argument_history.Count-1; i>=0; i++){
+			AddPrint("\t" + argument_history[i] + "\n------------", false);
 		}
 	}
 	AddPrint("\n\n\n", false);
@@ -565,6 +586,7 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
+	argument_history.Add(argument);
 	try{
 		Run(argument, updateSource);
 	}
