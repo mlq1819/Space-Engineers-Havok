@@ -650,24 +650,24 @@ private void SourceNavigation(string Command, string Data){
 	}
 	else if(Command.ToLower().Equals("invalid")){
 		if(Data.ToLower().Equals("connector")){
-			AddPrint("No valid connectors; ship cannot refuel or perform useful tasks");
+			AddPrint("No valid connectors; ship cannot refuel or perform useful tasks", true);
 			UpdateStatus(DroneStatus.Salvage);
 		}
 	}
 	else if(Command.ToLower().Equals("missing")){
 		if(Data.ToLower().Equals("connector")){
-			AddPrint("No connectors; ship cannot refuel or perform useful tasks");
+			AddPrint("No connectors; ship cannot refuel or perform useful tasks", true);
 			UpdateStatus(DroneStatus.Salvage);
 		}
 		else if(Data.ToLower().Equals("sensor")){
 			Send(CoreIdentification, "Missing", "Sensor");
-			AddPrint("No valid sensors detected");
+			AddPrint("No valid sensors detected", true);
 			CurrentTask = ActiveTask.None;
 			UpdateStatus(DroneStatus.Waiting);
 		}
 		else if(Data.ToLower().Equals("landinggear")){
 			Send(CoreIdentification, "Missing", "LandingGear");
-			AddPrint("No landing gear detected");
+			AddPrint("No landing gear detected", true);
 			CurrentTask = ActiveTask.None;
 			UpdateStatus(DroneStatus.Waiting);
 		}
@@ -1208,9 +1208,9 @@ public void Main(string argument, UpdateType updateSource)
 	else
 		CoreIDNumber = Int32.Parse(CoreIdentification);
 	if(CoreIDNumber == 0){
-		AddPrint("Currently in Factory Default Settings");
+		AddPrint("Currently in Factory Default Settings", true);
 		FinalPrint();
-		exit(0);
+		BlocksSet = false;
 		return;
 	}
 	if(argument.Equals("CoreDirective:Reset")){
