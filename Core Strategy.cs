@@ -184,7 +184,7 @@ public void SetBlocks(){
 				BlocksSet = false;
 				AddPrint("Retrieved CoreIdentification; set to \"" + CoreIdentification + "\"", true);
 			}
-			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 			if(CoreIDNumber == 0){
 				AddPrint("Currently in Factory Default Settings", true);
 				FinalPrint();
@@ -1211,7 +1211,7 @@ public bool CheckValidID(){
 	int CoreIDNumber = 0;
 	try{
 		if(CoreIdentification.Contains('-'))
-			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 		else
 			CoreIDNumber = Int32.Parse(CoreIdentification);
 		if(CoreIDNumber == 0){
@@ -1232,13 +1232,18 @@ public bool CheckValidID(){
 
 public void Run(string argument, UpdateType updateSource)
 {
-	if(!CheckValidID())
-		return;
 	if(argument.Equals("CoreDirective:Reset")){
 		Reset();
 		FinalPrint();
 		return;
 	} else if(argument.Contains("CoreDirective:Set<")){
+		Set(argument);
+		FinalPrint();
+		return;
+	}
+	if(!CheckValidID())
+		return;
+	if(argument.Equals("CoreDirective:Start")){
 		Set(argument);
 		FinalPrint();
 		return;

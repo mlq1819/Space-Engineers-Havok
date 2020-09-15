@@ -72,17 +72,29 @@ public void SetBlocks(bool retry){
 	try{
 		if(Me.CubeGrid.CustomName.Contains('-')){
 			CoreIdentification = Me.CubeGrid.CustomName;
-			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
-			if(CoreIDNumber == 0){
-				AddPrint("Currently in Factory Default Settings", true);
-				FinalPrint();
+			try{
+				int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
+				if(CoreIDNumber == 0){
+					AddPrint("Currently in Factory Default Settings", true);
+					FinalPrint();
+					BlocksSet = false;
+					return;
+				}
+			}
+			catch(FormatException){
+				AddPrint("Invalid CoreIdentification: " + CoreIdentification + "\nWiping data...", true);
+				Me.CustomData = "";
+				CoreIdentification = "";
+				Me.CubeGrid.CustomName = Me.CubeGrid.CustomName.Substring(0,Me.CubeGrid.CustomName.IndexOf('-'));
 				BlocksSet = false;
-				return;
 			}
 		}
 		if(!retry || (Me.CustomData == "" && CoreIdentification.Equals(""))){ //fresh processor; because this is the directive program, it sets up the identification for all other processors
 			retry = false;
 			Random rnd = new Random();
+			if(Me.CubeGrid.CustomName.Contains('-')){
+				Me.CubeGrid.CustomName = Me.CubeGrid.CustomName.Substring(0,Me.CubeGrid.CustomName.IndexOf('-'));
+			}
 			CoreIdentification = Me.CubeGrid.CustomName + '-' + rnd.Next(1, Int32.MaxValue).ToString();
 			Me.CubeGrid.CustomName = CoreIdentification;
 			AddPrint("New CoreIdentification: \"" + CoreIdentification + "\"", true);
@@ -151,7 +163,7 @@ public void SetBlocks(bool retry){
 			}
 			int CoreIDNumber = 0;
 			if(CoreIdentification.Contains('-'))
-				CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+				CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 			else
 				CoreIDNumber = Int32.Parse(CoreIdentification);
 			if(CoreIDNumber == 0){
@@ -298,7 +310,7 @@ public void SetBlocks(bool retry){
 		if(!AllStarted())
 			Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	} catch (Exception e){
-		AddPrint("Critical Core Failure: " + e.Message, true);
+		AddPrint("Critical Core Failure: " + e.ToString(), true);
 		if(retry){
 			Me.CustomData = "";
 			if(CoreStrategy != null && !CoreStrategy.CustomName.Contains("New ")){
@@ -346,7 +358,7 @@ public Program(){
 	}
 	catch(Exception e){
 		BlocksSet = false;
-		AddPrint("Exception:\n" + e.Message, true);
+		AddPrint("Exception:\n" + e.ToString(), true);
 		FinalPrint();
 	}
 }
@@ -392,7 +404,7 @@ public bool CheckValidID(){
 	int CoreIDNumber = 0;
 	try{
 		if(CoreIdentification.Contains('-'))
-			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 		else
 			CoreIDNumber = Int32.Parse(CoreIdentification);
 		if(CoreIDNumber == 0){
@@ -457,12 +469,12 @@ public void Run(string argument, UpdateType updateSource)
 			AddPrint("Successfully reset data; now initializing...", true);
 			Initialize();
 		} catch (Exception e){
-			AddPrint("Exception during Reset: " + e.Message, true);
+			AddPrint("Exception during Reset: " + e.ToString(), true);
 		}
 	}
 	int CoreIDNumber = 0;
 	if(CoreIdentification.Contains('-'))
-		CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+		CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 	else
 		CoreIDNumber = Int32.Parse(CoreIdentification);
 	if(CoreIDNumber == 0){

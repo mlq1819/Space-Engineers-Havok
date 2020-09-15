@@ -68,7 +68,7 @@ public void SetBlocks(){
 				BlocksSet = false;
 				AddPrint("Retrieved CoreIdentification; set to \"" + CoreIdentification + "\"", true);
 			}
-			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 			if(CoreIDNumber == 0){
 				AddPrint("Currently in Factory Default Settings", true);
 				FinalPrint();
@@ -222,7 +222,7 @@ public bool CheckValidID(){
 	int CoreIDNumber = 0;
 	try{
 		if(CoreIdentification.Contains('-'))
-			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')+1));
 		else
 			CoreIDNumber = Int32.Parse(CoreIdentification);
 		if(CoreIDNumber == 0){
@@ -243,59 +243,55 @@ public bool CheckValidID(){
 
 public void Run(string argument, UpdateType updateSource)
 {
+	if(argument.Equals("CoreDirective:Reset")){
+		Reset();
+		FinalPrint();
+		return;
+	} else if(argument.Contains("CoreDirective:Set<")){
+		Set(argument);
+		FinalPrint();
+		return;
+	}
 	if(!CheckValidID())
 		return;
-	try{
-		if(argument.Equals("CoreDirective:Reset")){
-			Reset();
-			FinalPrint();
-			return;
-		} else if(argument.Contains("CoreDirective:Set<")){
-			Set(argument);
-			FinalPrint();
-			return;
-		} else if(argument.Equals("CoreDirective:Start")){
-			if(!BlocksSet){
-				SetBlocks();
-				AddPrint("Started Program", true);
-			}
-			CoreDirective.TryRun(CoreName + ":Started");
-			AddPrint("Responded to Core Directive", true);
-			FinalPrint();
-			return;
-		} else if(argument.ToLower().Equals("terminal:reset")){
-			Wipe();
-			return;
+	if(argument.Equals("CoreDirective:Start")){
+		if(!BlocksSet){
+			SetBlocks();
+			AddPrint("Started Program", true);
 		}
-		switch(loadingChar){
-			case '|':
-				loadingChar='\\';
-				break;
-			case '\\':
-				loadingChar='-';
-				break;
-			case '-':
-				loadingChar='/';
-				break;
-			case '/':
-				loadingChar='|';
-				break;
-		}
-		if(BlocksSet){
-			AddPrint("Running program... (" + loadingChar + ")\n", false);
-			// The main entry point of the script, invoked every time
-			// one of the programmable block's Run actions are invoked,
-			// or the script updates itself. The updateSource argument
-			// describes where the update came from.
-			// 
-			// The method itself is required, but the arguments above
-			// can be removed if not needed.
-		} else {
-			AddPrint("Cannot run program --- blocks not set!", false);
-		}
-	} catch (Exception e){
+		CoreDirective.TryRun(CoreName + ":Started");
+		AddPrint("Responded to Core Directive", true);
 		FinalPrint();
-		throw e;
+		return;
+	} else if(argument.ToLower().Equals("terminal:reset")){
+		Wipe();
+		return;
+	}
+	switch(loadingChar){
+		case '|':
+			loadingChar='\\';
+			break;
+		case '\\':
+			loadingChar='-';
+			break;
+		case '-':
+			loadingChar='/';
+			break;
+		case '/':
+			loadingChar='|';
+			break;
+	}
+	if(BlocksSet){
+		AddPrint("Running program... (" + loadingChar + ")\n", false);
+		// The main entry point of the script, invoked every time
+		// one of the programmable block's Run actions are invoked,
+		// or the script updates itself. The updateSource argument
+		// describes where the update came from.
+		// 
+		// The method itself is required, but the arguments above
+		// can be removed if not needed.
+	} else {
+		AddPrint("Cannot run program --- blocks not set!", false);
 	}
 	FinalPrint();
 }
