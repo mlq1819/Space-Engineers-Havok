@@ -274,20 +274,27 @@ public void Initialize(){
 
 public Program()
 {
-	ShipName = Me.CubeGrid.CustomName;
-	if(this.Storage.Length>0){
-		if(this.Storage.Contains("\n")){
-			Status = (DroneStatus) Int32.Parse(this.Storage.Substring(0,this.Storage.IndexOf("/n")));
-			CurrentTask = (ActiveTask) Int32.Parse(this.Storage.Substring(this.Storage.IndexOf("/n")+1));
+	try{
+		ShipName = Me.CubeGrid.CustomName;
+		if(this.Storage.Length>0){
+			if(this.Storage.Contains("\n")){
+				Status = (DroneStatus) Int32.Parse(this.Storage.Substring(0,this.Storage.IndexOf("/n")));
+				CurrentTask = (ActiveTask) Int32.Parse(this.Storage.Substring(this.Storage.IndexOf("/n")+1));
+			}
+			Status = (DroneStatus) Int32.Parse(this.Storage);
 		}
-		Status = (DroneStatus) Int32.Parse(this.Storage);
+		if(ConfirmCoreName()){
+			Initialize();
+		} else {
+			throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+		}
+		Me.GetSurface(0).WriteText(CoreName, false);
 	}
-	if(ConfirmCoreName()){
-		Initialize();
-	} else {
-		throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+	catch(Exception e){
+		BlocksSet = false;
+		AddPrint("Exception:\n" + e.Message, true);
+		FinalPrint();
 	}
-	Me.GetSurface(0).WriteText(CoreName, false);
 }
 
 public void Save()

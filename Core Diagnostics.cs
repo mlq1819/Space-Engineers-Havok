@@ -296,14 +296,21 @@ public void Initialize(){
 
 public Program()
 {
-	ShipName = Me.CubeGrid.CustomName;
-	if(ConfirmCoreName()){
-		Status.Clear();
-		Initialize();
-	} else {
-		throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+	try{
+		ShipName = Me.CubeGrid.CustomName;
+		if(ConfirmCoreName()){
+			Status.Clear();
+			Initialize();
+		} else {
+			throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+		}
+		Me.GetSurface(0).WriteText(CoreName, false);
 	}
-	Me.GetSurface(0).WriteText(CoreName, false);
+	catch(Exception e){
+		BlocksSet = false;
+		AddPrint("Exception:\n" + e.Message, true);
+		FinalPrint();
+	}
 }
 
 public void Save()

@@ -306,12 +306,20 @@ public void Initialize()
 }
 
 public Program(){
-	if(ConfirmCoreName()){
-		Initialize();
-	} else {
-		throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+	try{
+		ShipName = Me.CubeGrid.CustomName;
+		if(ConfirmCoreName()){
+			Initialize();
+		} else {
+			throw new Exception("Correct CoreName to \"" + GetCoreName() + "\" (currently \"" + CoreName + "\")");
+		}
+		Me.GetSurface(0).WriteText(CoreName, false);
 	}
-	Me.GetSurface(0).WriteText(CoreName, false);
+	catch(Exception e){
+		BlocksSet = false;
+		AddPrint("Exception:\n" + e.Message, true);
+		FinalPrint();
+	}
 }
 
 public void Save()
@@ -326,8 +334,36 @@ public void Save()
     // needed.
 }
 
+private void Wipe(){
+	this.Storage = "";
+	Me.CustomData = "";
+	CoreIdentification = "0";
+	BlocksSet = false;
+	Cycle = 0;
+	Long_Cycle = 1;
+	message_history = new List<string>();
+	Runtime.UpdateFrequency = UpdateFrequency.None;
+	AddPrint("Factory Reset Settings and Cleared Storage", true);
+	Initialize();
+}
+
 public void Main(string argument, UpdateType updateSource)
 {
+	if(argument.ToLower().Equals("wipe")){
+		if(CoreStrategy != null){
+			CoreStrategy.TryRun("Terminal:Reset");
+		}
+		if(CoreNavigation != null){
+			CoreNavigation.TryRun("Terminal:Reset");
+		}
+		if(CoreDiagnostics != null){
+			CoreDiagnostics.TryRun("Terminal:Reset");
+		}
+		if(CoreCommunications != null){
+			CoreCommunications.TryRun("Terminal:Reset");
+		}
+		Wipe();
+	}
 	if(argument.ToLower().Equals("reset") || argument.ToLower().Equals("terminal:reset")){
 		message_history = new List<string>();
 		try{
