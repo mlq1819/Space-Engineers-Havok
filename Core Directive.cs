@@ -52,13 +52,14 @@ private int TryCount = 0;
 private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
 
 private void RunOldCommands(){
-	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
-	foreach(ProgRunTuple tuple in programs_to_run){
-		if(!TryRunCommand(tuple.Block, tuple.Command)){
-			new_progs.Add(tuple);
+	if(programs_to_run.Count > 0){
+		List<ProgRunTuple> old_progs = programs_to_run;
+		programs_to_run = new List<ProgRunTuple>();
+		for(int i=0; i<old_progs.Count; i++){
+			ProgRunTuple tuple = old_progs[i];
+			TryRunCommand(tuple.Block, tuple.Command);
 		}
 	}
-	programs_to_run = new_progs;
 }
 
 private bool TryRunCommand(IMyProgrammableBlock block, string command){
