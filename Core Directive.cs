@@ -149,8 +149,24 @@ public void SetBlocks(bool retry){
 				CoreIdentification = Me.CustomData;
 				AddPrint("Retrieved CoreIdentification: " + CoreIdentification, true);
 			}
+			int CoreIDNumber = 0;
+			if(CoreIdentification.Contains('-'))
+				CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+			else
+				CoreIDNumber = Int32.Parse(CoreIdentification);
+			if(CoreIDNumber == 0){
+				AddPrint("Currently in Factory Default Settings", true);
+				FinalPrint();
+				BlocksSet = false;
+				return;
+			}
 			List<IMyProgrammableBlock> AllProgBlocks = new List<IMyProgrammableBlock>();
 			GridTerminalSystem.GetBlocksOfType<IMyProgrammableBlock>(AllProgBlocks);
+			IMyProgrammableBlock CoreStrategy = null;
+			IMyProgrammableBlock CoreNavigation = null;
+			IMyProgrammableBlock CoreDiagnostics = null;
+			IMyProgrammableBlock CoreCommunications = null;
+			IMyProgrammableBlock CoreDirective = null;
 			int core_count = 0;
 			for(int i=0; i<AllProgBlocks.Count; i++){
 				if(AllProgBlocks[i].CustomName == "Core Strategy Processor" && AllProgBlocks[i].CustomData == CoreIdentification){
@@ -180,37 +196,47 @@ public void SetBlocks(bool retry){
 			bool set_communications = false;
 			if(CoreStrategy == null){
 				CoreStrategy = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName("New Core Strategy Processor");
-				CoreStrategy.CustomName = "Core Strategy Processor";
-				CoreStrategy.CustomData = CoreIdentification;
-				set_strategy = true;
-				core_count++;
+				if(CoreStrategy != null){
+					CoreStrategy.CustomName = "Core Strategy Processor";
+					CoreStrategy.CustomData = CoreIdentification;
+					set_strategy = true;
+					core_count++;
+				}
 			}
 			if(CoreNavigation == null){
 				CoreNavigation = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName("New Core Navigation Processor");
-				CoreNavigation.CustomName = "Core Navigation Processor";
-				CoreNavigation.CustomData = CoreIdentification;
-				set_navigation = true;
-				core_count++;
+				if(CoreNavigation != null){
+					CoreNavigation.CustomName = "Core Navigation Processor";
+					CoreNavigation.CustomData = CoreIdentification;
+					set_navigation = true;
+					core_count++;
+				}
 			}
 			if(CoreDiagnostics == null){
 				CoreDiagnostics = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName("New Core Diagnostics Processor");
-				CoreDiagnostics.CustomName = "Core Diagnostics Processor";
-				CoreDiagnostics.CustomData = CoreIdentification;
-				set_diagnostics = true;
-				core_count++;
+				if(CoreDiagnostics != null){
+					CoreDiagnostics.CustomName = "Core Diagnostics Processor";
+					CoreDiagnostics.CustomData = CoreIdentification;
+					set_diagnostics = true;
+					core_count++;
+				}
 			}
 			if(CoreCommunications == null){
 				CoreCommunications = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName("New Core Communications Processor");
-				CoreCommunications.CustomName = "Core Communications Processor";
-				CoreCommunications.CustomData = CoreIdentification;
-				set_communications = true;
-				core_count++;
+				if(CoreCommunications != null){
+					CoreCommunications.CustomName = "Core Communications Processor";
+					CoreCommunications.CustomData = CoreIdentification;
+					set_communications = true;
+					core_count++;
+				}
 			}
 			if(CoreDirective == null){
-				CoreDirective = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName("New Core Directive Processor");
-				CoreDirective.CustomName = "Core Directive Processor";
-				CoreDirective.CustomData = CoreIdentification;
-				core_count++;
+				CoreDirective = (IMyProgrammableBlock) GridTerminalSystem.GetBlockWithName(Me.CustomName);
+				if(CoreDirective != null){
+					CoreDirective.CustomName = "Core Directive Processor";
+					CoreDirective.CustomData = CoreIdentification;
+					core_count++;
+				}
 			}
 			if(set_strategy){
 				CoreStrategy.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
@@ -502,8 +528,9 @@ public void Main(string argument, UpdateType updateSource){
 		Run(argument, updateSource);
 	}
 	catch(Exception e){
-		AddPrint("Exception:\n" + e.Message, true);
+		AddPrint("Exception:\n" + e.ToString(), true);
 		BlocksSet = false;
+		Runtime.UpdateFrequency = UpdateFrequency.None;
 		FinalPrint();
 	}
 }

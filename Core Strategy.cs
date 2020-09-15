@@ -1299,8 +1299,9 @@ public void Main(string argument, UpdateType updateSource){
 		Run(argument, updateSource);
 	}
 	catch(Exception e){
-		AddPrint("Exception:\n" + e.Message, true);
+		AddPrint("Exception:\n" + e.ToString(), true);
 		BlocksSet = false;
+		Runtime.UpdateFrequency = UpdateFrequency.None;
 		FinalPrint();
 	}
 }
