@@ -44,14 +44,14 @@ private void FinalPrint(){
 	toEcho = "Cycle " + Long_Cycle + '-' + (++Cycle) + "\nCoreIdentification: " + CoreIdentification + '\n' + toEcho;
 	if(argument_history.Count > 50){
 		List<string> new_history = new List<string>();
-		for(int i=25; i<argument_history.Length; i++){
+		for(int i=25; i<argument_history.Count; i++){
 			new_history.Add(argument_history[i]);
 		}
 		argument_history = new_history;
 	}
 	if(message_history.Count > 20){
 		List<string> new_history = new List<string>();
-		for(int i=10; i<message_history.Length; i++){
+		for(int i=10; i<message_history.Count; i++){
 			new_history.Add(message_history[i]);
 		}
 		message_history = new_history;
