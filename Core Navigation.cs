@@ -760,13 +760,16 @@ public bool CheckValidID(){
 			AddPrint("Currently in Factory Default Settings", true);
 			FinalPrint();
 			BlocksSet = false;
+			return false;
 		}
 	}
 	catch(FormatException e){
 		AddPrint("Invalid ID:" + CoreIdentification + "\nWiping ID...", true);
 		Wipe();
 		FinalPrint();
+		return false;
 	}
+	return true;
 }
 
 public void Run(string argument, UpdateType updateSource)
