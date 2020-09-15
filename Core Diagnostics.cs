@@ -406,6 +406,7 @@ private void Reset(){
 }
 
 private void Set(string argument){
+	AddPrint("Set(" + argument + ")", true);
 	int index = argument.IndexOf('<')+1;
 	int length = argument.Substring(index).IndexOf('>');
 	ShipName = Me.CubeGrid.CustomName;
@@ -1042,7 +1043,7 @@ public void Run(string argument, UpdateType updateSource)
 {
 	if(argument.Equals("CoreDirective:Stop")){
 		Runtime.UpdateFrequency = UpdateFrequency.None;
-		AddPrint("Stop Command received");
+		AddPrint("Stop Command received", true);
 		return;
 	}
 	else if(argument.Equals("CoreDirective:Reset")){
