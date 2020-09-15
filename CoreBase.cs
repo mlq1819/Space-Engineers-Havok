@@ -68,11 +68,11 @@ public void SetBlocks(){
 				BlocksSet = false;
 				AddPrint("Retrieved CoreIdentification; set to \"" + CoreIdentification + "\"", true);
 			}
-			long CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
+			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
 			if(CoreIDNumber == 0){
-				AddPrint("Currently in Factory Default Settings");
+				AddPrint("Currently in Factory Default Settings", true);
 				FinalPrint();
-				exit(0);
+				BlocksSet = false;
 				return;
 			}
 			List<IMyProgrammableBlock> AllProgBlocks = new List<IMyProgrammableBlock>();
@@ -213,15 +213,15 @@ private void Set(string argument){
 
 public void Main(string argument, UpdateType updateSource)
 {
-	long CoreIDNumber = 0;
+	int CoreIDNumber = 0;
 	if(CoreIdentification.Contains('-'))
-		CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
+		CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
 	else
 		CoreIDNumber = Int32.Parse(CoreIdentification);
 	if(CoreIDNumber == 0){
-		AddPrint("Currently in Factory Default Settings");
+		AddPrint("Currently in Factory Default Settings", true);
 		FinalPrint();
-		exit(0);
+		BlocksSet = false;
 		return;
 	}
 	try{

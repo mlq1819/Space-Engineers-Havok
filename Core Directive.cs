@@ -72,11 +72,11 @@ public void SetBlocks(bool retry){
 	try{
 		if(Me.CubeGrid.CustomName.Contains('-')){
 			CoreIdentification = Me.CubeGrid.CustomName;
-			long CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
+			int CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
 			if(CoreIDNumber == 0){
-				AddPrint("Currently in Factory Default Settings");
+				AddPrint("Currently in Factory Default Settings", true);
 				FinalPrint();
-				exit(0);
+				BlocksSet = false;
 				return;
 			}
 		}
@@ -370,15 +370,15 @@ public void Main(string argument, UpdateType updateSource)
 			AddPrint("Exception during Reset: " + e.Message, true);
 		}
 	}
-	long CoreIDNumber = 0;
+	int CoreIDNumber = 0;
 	if(CoreIdentification.Contains('-'))
-		CoreIDNumber = Int32.Parse(CoreIdentification.IndexOf('-'));
+		CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
 	else
 		CoreIDNumber = Int32.Parse(CoreIdentification);
 	if(CoreIDNumber == 0){
-		AddPrint("Currently in Factory Default Settings");
+		AddPrint("Currently in Factory Default Settings", true);
 		FinalPrint();
-		exit(0);
+		BlocksSet = false;
 		return;
 	}
 	else if(argument.ToLower().Contains(":started")){
