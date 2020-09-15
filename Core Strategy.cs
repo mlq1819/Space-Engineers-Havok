@@ -2,15 +2,11 @@
 //Core strategy; interface between the other cores. Makes decisions based on the current DroneStatus and ActiveTask and sends commands to the relevant cores 
 
 public struct ProgRunTuple{
-	IMyProgrammableBlock Block;
-	string Command;
+	public IMyProgrammableBlock Block;
+	public string Command;
 	public ProgRunTuple(IMyProgrammableBlock b, string c){
 		Block = b;
 		Command = c;
-	}
-	public ProgRunTuple(){
-		Block = null;
-		Command = "";
 	}
 }
 
@@ -122,7 +118,7 @@ private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
 private void RunOldCommands(){
 	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
 	foreach(ProgRunTuple tuple in programs_to_run){
-		if(!TryRunCommand(tuple.Block, tuple.Command){
+		if(!TryRunCommand(tuple.Block, tuple.Command)){
 			new_progs.Add(tuple);
 		}
 	}
@@ -1286,7 +1282,12 @@ public bool CheckValidID(){
 
 public void Run(string argument, UpdateType updateSource)
 {
-	if(argument.Equals("CoreDirective:Reset")){
+	if(argument.Equals("CoreDirective:Stop")){
+		Runtime.UpdateFrequency = UpdateFrequency.None;
+		AddPrint("Stop Command received");
+		return;
+	}
+	else if(argument.Equals("CoreDirective:Reset")){
 		Reset();
 		FinalPrint();
 		return;

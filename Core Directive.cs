@@ -4,15 +4,11 @@
 //private List<string> Critical_Components;
 
 public struct ProgRunTuple{
-	IMyProgrammableBlock Block;
-	string Command;
+	public IMyProgrammableBlock Block;
+	public string Command;
 	public ProgRunTuple(IMyProgrammableBlock b, string c){
 		Block = b;
 		Command = c;
-	}
-	public ProgRunTuple(){
-		Block = null;
-		Command = "";
 	}
 }
 
@@ -58,7 +54,7 @@ private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
 private void RunOldCommands(){
 	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
 	foreach(ProgRunTuple tuple in programs_to_run){
-		if(!TryRunCommand(tuple.Block, tuple.Command){
+		if(!TryRunCommand(tuple.Block, tuple.Command)){
 			new_progs.Add(tuple);
 		}
 	}
@@ -73,6 +69,8 @@ private bool TryRunCommand(IMyProgrammableBlock block, string command){
 	block.TryRun(CoreName + ":" + command);
 	return true;
 }
+
+private bool failed_to_start = false;
 
 private bool AllStarted(){
 	return Started_Strategy && Started_Navigation && Started_Diagnostics && Started_Communications;
@@ -584,9 +582,26 @@ public void Run(string argument, UpdateType updateSource)
 				break;
 		}
 		AddPrint("Running program... (" + loadingChar + ")", false);
-		if(TryCount++>3){
+		if(TryCount++>5 && !AllStarted()){
 			Runtime.UpdateFrequency = UpdateFrequency.None;
-			AddPrint("Stopped Updating", true);
+			string missing_cores = "";
+			if(!Started_Strategy)
+				missing_cores += ", CoreStrategy";
+			if(!Started_Navigation)
+				missing_cores += ", CoreNavigation";
+			if(!Started_Diagnostics)
+				missing_cores += ", CoreDiagnostics";
+			if(!Started_Communications)
+				missing_cores += ", CoreCommunications";
+			AddPrint("The following cores failed to start: {" + missing_cores.Substring(2) + "}", true);
+			TryRunCommand(CoreStrategy, "Stop");
+			TryRunCommand(CoreNavigation, "Stop");
+			TryRunCommand(CoreDiagnostics, "Stop");
+			TryRunCommand(CoreCommunications, "Stop");
+			failed_to_start = true;
+			if(programs_to_run.Count > 0){
+				Runtime.UpdateFrequency = UpdateFrequency.Update100;
+			}
 		} else {
 			if(!Started_Strategy){
 				TryRunCommand(CoreStrategy, "Start");
@@ -622,7 +637,13 @@ public void Main(string argument, UpdateType updateSource){
 		argument_history.Add(argument);
 	try{
 		RunOldCommands();
-		Run(argument, updateSource);
+		if(!failed_to_start){
+			Run(argument, updateSource);
+		} else if(programs_to_run.Count > 0){
+			Runtime.UpdateFrequency = UpdateFrequency.Update100;
+		} else {
+			Runtime.UpdateFrequency = UpdateFrequency.None;
+		}
 	}
 	catch(Exception e){
 		AddPrint("Exception:\n" + e.ToString(), true);
