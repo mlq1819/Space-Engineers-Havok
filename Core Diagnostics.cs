@@ -1,5 +1,19 @@
 //Havok Core programming information
 //Takes note of ship status and updates the ship based on relevant information
+
+public struct ProgRunTuple{
+	IMyProgrammableBlock Block;
+	string Command;
+	public ProgRunTuple(IMyProgrammableBlock b, string c){
+		Block = b;
+		Command = c;
+	}
+	public ProgRunTuple(){
+		Block = null;
+		Command = "";
+	}
+}
+
 public struct DTuple{
 	public uint Num;
 	public uint Full;
@@ -47,6 +61,26 @@ private List<string> argument_history = new List<string>();
 private bool BlocksSet = false;
 private long Cycle = 0;
 private long Long_Cycle = 1;
+private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
+
+private void RunOldCommands(){
+	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
+	foreach(ProgRunTuple tuple in programs_to_run){
+		if(!TryRunCommand(tuple.Block, tuple.Command){
+			new_progs.Add(tuple);
+		}
+	}
+	programs_to_run = new_progs;
+}
+
+private bool TryRunCommand(IMyProgrammableBlock block, string command){
+	if(block.IsRunning){
+		programs_to_run.Add(new ProgRunTuple(block, command));
+		return false;
+	}
+	block.TryRun(CoreName + ":" + command);
+	return true;
+}
 
 private IMyProjector CoreProjector = null;
 private Dictionary<string, DTuple> Status = new Dictionary<string, DTuple>();
@@ -453,17 +487,17 @@ private bool AveragePowerTime(){
 	AddPrint("Average Power Remaining: " + time + " hours\nAverage Power Consumption: " + average_consumption.ToString() + " mWh\nTotal Power: " + total_power + " mWh", false);
 	if(!average_time_low && time < 2){
 		found_update = true;
-		CoreStrategy.TryRun(CoreName + ":PowerLow<" + time + ">");
+		TryRunCommand(CoreStrategy, "PowerLow<" + time + ">");
 		average_time_low = true;
 	}
 	else if(average_time_low && time >= 12){
 		found_update = true;
-		CoreStrategy.TryRun(CoreName + ":PowerAdequate<" + time + ">");
+		TryRunCommand(CoreStrategy, "PowerAdequate<" + time + ">");
 		average_time_low = false;
 	}
 	if(!average_time_critical && time < 0.5){
 		found_update = true;
-		CoreStrategy.TryRun(CoreName + ":PowerCritical<" + time + ">");
+		TryRunCommand(CoreStrategy, "PowerCritical<" + time + ">");
 		average_time_critical = true;
 	}
 	else if(average_time_critical && time >= 0.5){
@@ -698,19 +732,19 @@ private bool TurretDiagnostics(){
 		if(!Low_Rockets && Rocket_Count < Rocket_Ideal / 2){
 			found_update = true;
 			Low_Rockets = true;
-			CoreStrategy.TryRun(CoreName + ":RequestLow<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestLow<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
 			AddPrint("Low Missile200mm " + Rocket_Count + " of " + Rocket_Ideal, true);
 		}
 		else if(Low_Rockets && Rocket_Count >= Rocket_Ideal){
 			found_update = true;
 			Low_Rockets = false;
-			CoreStrategy.TryRun(CoreName + ":RequestAdequate<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestAdequate<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
 			AddPrint("Adequate Missile200mm " + Rocket_Count + " of " + Rocket_Ideal, true);
 		}
 		if(!Critical_Rockets && Rocket_Count < Rocket_Ideal / 5){
 			found_update = true;
 			Critical_Rockets = true;
-			CoreStrategy.TryRun(CoreName + ":RequestCritical<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestCritical<Missile200mm " + Rocket_Count + " of " + Rocket_Ideal + ">");
 			AddPrint("Critical Missile200mm " + Rocket_Count + " of " + Rocket_Ideal, true);
 		}
 		else if(Critical_Rockets && Rocket_Count >= Rocket_Ideal / 5){
@@ -720,19 +754,19 @@ private bool TurretDiagnostics(){
 		if(!Low_Magazines && Magazine_Count < Magazine_Ideal / 2){
 			found_update = true;
 			Low_Magazines = true;
-			CoreStrategy.TryRun(CoreName + ":RequestLow<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestLow<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
 			AddPrint("Low NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal, true);
 		}
 		else if(Low_Magazines && Magazine_Count >= Magazine_Ideal){
 			found_update = true;
 			Low_Magazines = false;
-			CoreStrategy.TryRun(CoreName + ":RequestCancel<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestCancel<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
 			AddPrint("Adequate NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal, true);
 		}
 		if(!Critical_Magazines && Magazine_Count < Magazine_Ideal / 5){
 			found_update = true;
 			Critical_Magazines = true;
-			CoreStrategy.TryRun(CoreName + ":RequestCritical<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
+			TryRunCommand(CoreStrategy, "RequestCritical<NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal + ">");
 			AddPrint("Critical NATO_25x184mm " + Magazine_Count + " of " + Magazine_Ideal, true);
 		}
 		else if(Critical_Magazines && Magazine_Count >= Magazine_Ideal / 5){
@@ -758,7 +792,7 @@ private bool DockedDiagnostics(){
 				found_docked = true;
 				if(!Is_Docked){
 					found_update = true;
-					CoreStrategy.TryRun(CoreName + ":Docking<Docked>");
+					TryRunCommand(CoreStrategy, "Docking<Docked>");
 					AddPrint(Connector.CustomName + ":Docked", true);
 				}
 			}
@@ -766,7 +800,7 @@ private bool DockedDiagnostics(){
 				found_dockable = true;
 				if(!Can_Dock){
 					found_update = true;
-					CoreStrategy.TryRun(CoreName + ":Docking<Dockable>");
+					TryRunCommand(CoreStrategy, "Docking<Dockable>");
 					AddPrint(Connector.CustomName + ":Dockable", true);
 				}
 			}
@@ -774,13 +808,13 @@ private bool DockedDiagnostics(){
 		if(Is_Docked && !found_docked){
 			found_update = true;
 			Is_Docked = false;
-			CoreStrategy.TryRun(CoreName + ":Docking<Undocked>");
+			TryRunCommand(CoreStrategy, "Docking<Undocked>");
 			AddPrint("Connector:Undocked", true);
 		}
 		if(Can_Dock && !found_dockable){
 			found_update = true;
 			Can_Dock = false;
-			CoreStrategy.TryRun(CoreName + ":Docking<Undockable>");
+			TryRunCommand(CoreStrategy, "Docking<Undockable>");
 			AddPrint("Connector:Undockable", true);
 		}
 	}
@@ -801,7 +835,7 @@ private bool LockedDiagnostics(){
 				found_locked = true;
 				if(!Is_Locked){
 					found_update = true;
-					CoreStrategy.TryRun(CoreName + ":Locking<Locked>");
+					TryRunCommand(CoreStrategy, "Locking<Locked>");
 					AddPrint(LandingGear.CustomName + ":Locked", true);
 				}
 			}
@@ -809,7 +843,7 @@ private bool LockedDiagnostics(){
 				found_lockable = true;
 				if(!Can_Lock){
 					found_update = true;
-					CoreStrategy.TryRun(CoreName + ":Locking<Lockable>");
+					TryRunCommand(CoreStrategy, "Locking<Lockable>");
 					AddPrint(LandingGear.CustomName + ":Lockable", true);
 				}
 			}
@@ -817,13 +851,13 @@ private bool LockedDiagnostics(){
 		if(Is_Locked && !found_locked){
 			found_update = true;
 			Is_Locked = false;
-			CoreStrategy.TryRun(CoreName + ":Locking<Unlocked>");
+			TryRunCommand(CoreStrategy, "Locking<Unlocked>");
 			AddPrint("LandingGear:Unlocked", true);
 		}
 		if(Can_Lock && !found_lockable){
 			found_update = true;
 			Can_Lock = false;
-			CoreStrategy.TryRun(CoreName + ":Locking<Unlockable>");
+			TryRunCommand(CoreStrategy, "Locking<Unlockable>");
 			AddPrint("LandingGear:Unlockable", true);
 		}
 	}
@@ -842,10 +876,10 @@ private bool CargoDiagnostics(){
 			if(current != old){
 				found_update = true;
 				if(current < old){
-					CoreStrategy.TryRun(Cargo.CustomName + ":Report<CargoUnloaded " + Cargo.CustomName + " at " + (new DTuple(current, full).Percent()).ToString() + ">");
+					TryRunCommand(CoreStrategy, "Report<CargoUnloaded " + Cargo.CustomName + " at " + (new DTuple(current, full).Percent()).ToString() + ">");
 					AddPrint(Cargo.CustomName + ":" + current.ToString() + " / " + full.ToString() + " (CargoUnloaded" + (new DTuple(current, full).Percent()).ToString() + ')', true);
 				} else {
-					CoreStrategy.TryRun(Cargo.CustomName + ":Report<CargoLoaded " + Cargo.CustomName + " at " + (new DTuple(current, full).Percent()).ToString() + ">");
+					TryRunCommand(CoreStrategy, "Report<CargoLoaded " + Cargo.CustomName + " at " + (new DTuple(current, full).Percent()).ToString() + ">");
 					AddPrint(Cargo.CustomName + ":" + current.ToString() + " / " + full.ToString() + " (CargoLoaded" + (new DTuple(current, full).Percent()).ToString() + ')', true);
 				}
 				Status[Cargo.CustomName] = new DTuple(current, full);
@@ -879,10 +913,10 @@ private void DiagHelper(string key, uint count){
 			if(count != old_count){
 				found_update = true;
 				if(count < old_count){
-					CoreStrategy.TryRun(CoreName + ":Report<Broke " + key + " at " + (new DTuple(count, full).Percent()).ToString() + ">");
+					TryRunCommand(CoreStrategy, "Report<Broke " + key + " at " + (new DTuple(count, full).Percent()).ToString() + ">");
 					AddPrint(key + ":" + count.ToString() + " / " + full.ToString() + " (Broke" + (new DTuple(count, full).Percent()).ToString() + ')', true);
 				} else {
-					CoreStrategy.TryRun(CoreName + ":Report<Fixed " + key + " at " + (new DTuple(count, full).Percent()).ToString() + ">");
+					TryRunCommand(CoreStrategy, "Report<Fixed " + key + " at " + (new DTuple(count, full).Percent()).ToString() + ">");
 					AddPrint(key + ":" + count.ToString() + " / " + full.ToString() + " (Fixed" + (new DTuple(count, full).Percent()).ToString() + ')', true);
 				}
 				Status[key] = new DTuple(count, full);
@@ -1025,7 +1059,7 @@ public void Run(string argument, UpdateType updateSource)
 		if(!BlocksSet)
 			SetBlocks();
 		AddPrint("Started Program", true);
-		CoreDirective.TryRun(CoreName + ":Started");
+		TryRunCommand(CoreDirective, "Started");
 		FinalPrint();
 		return;
 	} else if(argument.ToLower().Equals("terminal:reset")){
@@ -1060,8 +1094,10 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
-	argument_history.Add(argument);
+	if(argument.Length > 0)
+		argument_history.Add(argument);
 	try{
+		RunOldCommands();
 		Run(argument, updateSource);
 	}
 	catch(Exception e){

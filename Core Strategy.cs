@@ -1,6 +1,19 @@
 //Havok Core programming information
 //Core strategy; interface between the other cores. Makes decisions based on the current DroneStatus and ActiveTask and sends commands to the relevant cores 
 
+public struct ProgRunTuple{
+	IMyProgrammableBlock Block;
+	string Command;
+	public ProgRunTuple(IMyProgrammableBlock b, string c){
+		Block = b;
+		Command = c;
+	}
+	public ProgRunTuple(){
+		Block = null;
+		Command = "";
+	}
+}
+
 private string GetCoreName(){
 	string name = Me.CustomName;
 	if(name.Contains("New ")){
@@ -104,6 +117,26 @@ private List<string> argument_history = new List<string>();
 private bool BlocksSet = false;
 private long Cycle = 0;
 private long Long_Cycle = 1;
+private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
+
+private void RunOldCommands(){
+	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
+	foreach(ProgRunTuple tuple in programs_to_run){
+		if(!TryRunCommand(tuple.Block, tuple.Command){
+			new_progs.Add(tuple);
+		}
+	}
+	programs_to_run = new_progs;
+}
+
+private bool TryRunCommand(IMyProgrammableBlock block, string command){
+	if(block.IsRunning){
+		programs_to_run.Add(new ProgRunTuple(block, command));
+		return false;
+	}
+	block.TryRun(CoreName + ":" + command);
+	return true;
+}
 
 private SystemStatus Systems = SystemStatus.Normal;
 private SystemStatus Power = SystemStatus.Normal;
@@ -373,7 +406,7 @@ public void StartPerformTask(){
 					if(Dockable)
 						Docked = Docked || Dock();
 					if(Docked){
-						CoreNavigation.TryRun(CoreName + ":Docked<>");
+						TryRunCommand(CoreNavigation, "Docked<>");
 						CurrentTask = ActiveTask.Refueling;
 						UpdateStatus(DroneStatus.Performing);
 						Strategize();
@@ -381,15 +414,15 @@ public void StartPerformTask(){
 					}
 				}
 				else {
-					CoreNavigation.TryRun(CoreName + ":Dock<(" + DockPort.ToString() + ")>");
+					TryRunCommand(CoreNavigation, "Dock<(" + DockPort.ToString() + ")>");
 					AddPrint("Initiating docking maneuvers with (" + DockPort.ToString() + ")", true);
 				}
 			}
 			break;
 		case ActiveTask.Attacking:
 			if(ready_follow){
-				CoreNavigation.TryRun(CoreName + ":Follow<(" + follow_position.ToString() + ");(" + follow_velocity.ToString() + ")>");
-				CoreNavigation.TryRun(CoreName + ":Evasion<On>");
+				TryRunCommand(CoreNavigation, "Follow<(" + follow_position.ToString() + ");(" + follow_velocity.ToString() + ")>");
+				TryRunCommand(CoreNavigation, "Evasion<On>");
 				AddPrint("Commanding Navigation to follow position (" + follow_position.ToString() + ") moving at (" + follow_velocity.ToString() + ")", true);
 				UpdateStatus(DroneStatus.Performing);
 			}
@@ -445,7 +478,7 @@ private void EndPerformTask(){
 			Undock();
 			break;
 		case ActiveTask.Attacking:
-			CoreNavigation.TryRun(CoreName + ":Evasion<Off>");
+			TryRunCommand(CoreNavigation, "Evasion<Off>");
 			break;
 		case ActiveTask.Mining:
 			//TODO; add logic for ending this task, regardless of the current status of the task
@@ -460,7 +493,7 @@ private void EndPerformTask(){
 			//TODO; add logic for ending this task, regardless of the current status of the task
 			break;
 		case ActiveTask.Defending:
-			CoreNavigation.TryRun(CoreName + ":Evasion<Off>");
+			TryRunCommand(CoreNavigation, "Evasion<Off>");
 			break;
 		case ActiveTask.Yelling:
 			//TODO; add logic for ending this task, regardless of the current status of the task
@@ -565,7 +598,7 @@ private void Set(string argument){
 private void Send(string Tag, string Message){
 	if(Tag.Contains(';'))
 		throw new ArgumentException("Tag may not contain a semicolon (" + Tag + ')');
-	CoreCommunications.TryRun(CoreName + ":Send<" + Tag + ';' + Message + '>');
+	TryRunCommand(CoreCommunications, "Send<" + Tag + ';' + Message + '>');
 }
 
 private void Send(string Tag, string Command, string Data){
@@ -653,7 +686,7 @@ private void SourceNavigation(string Command, string Data){
 		Vector3D Destination = -1*Gravity;
 		Destination.Normalize();
 		Destination = Me.GetPosition() + 5000 * Gravity;
-		CoreNavigation.TryRun(CoreName + ":GoTo<(" + Destination.ToString() + ")>");
+		TryRunCommand(CoreNavigation, "GoTo<(" + Destination.ToString() + ")>");
 		Send("Havok Open Channel", "Gravity", "(" + Me.GetPosition().ToString() + ")");
 		AddPrint("Set escape GPS to (" + Destination.ToString() + ")\nBroadcast edge of Gravity Well", true);
 		UpdateStatus(DroneStatus.Escaping);
@@ -710,7 +743,7 @@ private void SourceCommunications(string Command, string Data){
 		start += end+1;
 		end=0;
 		if(Subcommand.Equals("GoTo")){ //Data = "GoTo (x,y,z)"
-			CoreNavigation.TryRun(CoreName + ":GoTo<" + Data.Substring(Data.IndexOf('(')) + '>');
+			TryRunCommand(CoreNavigation, "GoTo<" + Data.Substring(Data.IndexOf('(')) + '>');
 			AddPrint("Directed CoreNavigation to GoTo " + Data.Substring(Data.IndexOf('(')), true);
 		}
 	}
@@ -735,7 +768,7 @@ private void SourceCommunications(string Command, string Data){
 		end = Data.Substring(start).IndexOf(')');
 		z = double.Parse(Data.Substring(start, end).Trim());
 		Vector3D velocity = new Vector3D(x,y,z);
-		CoreNavigation.TryRun(CoreName + ":Follow<(" + position.ToString() + ");(" + velocity.ToString() + ")>");
+		TryRunCommand(CoreNavigation, "Follow<(" + position.ToString() + ");(" + velocity.ToString() + ")>");
 		AddPrint("Commanding Navigation to follow position (" + position.ToString() + ") moving at (" + velocity.ToString() + ")", true);
 	}
 	else if(Command.ToLower().Equals("resupply")){
@@ -759,7 +792,7 @@ private void SourceCommunications(string Command, string Data){
 		end = Data.Substring(start).IndexOf(')');
 		z = double.Parse(Data.Substring(start, end).Trim());
 		DockPort = new Vector3D(x,y,z);
-		CoreNavigation.TryRun(CoreName + ":GoTo<(" + flyto.ToString() + ")>");
+		TryRunCommand(CoreNavigation, "GoTo<(" + flyto.ToString() + ")>");
 		AddPrint("Directed CoreNavigation to fly to (" + flyto.ToString() + ") to dock with (" + DockPort.ToString() + ")", true);
 		CurrentTask = ActiveTask.Docking;
 		Status = DroneStatus.Returning;
@@ -785,7 +818,7 @@ private void SourceCommunications(string Command, string Data){
 		end = Data.Substring(start).IndexOf(')');
 		z = double.Parse(Data.Substring(start, end).Trim());
 		DockPort = new Vector3D(x,y,z);
-		CoreNavigation.TryRun(CoreName + ":GoTo<(" + flyto.ToString() + ")>");
+		TryRunCommand(CoreNavigation, "GoTo<(" + flyto.ToString() + ")>");
 		AddPrint("Directed CoreNavigation to fly to (" + flyto.ToString() + ") to dock with (" + DockPort.ToString() + ") and deliver resources", true);
 		CurrentTask = ActiveTask.Docking;
 		Status = DroneStatus.Venturing;
@@ -1193,7 +1226,7 @@ private void Strategize(){
 					Docked = Docked || Dock();
 				}
 				if(Docked){
-					CoreNavigation.TryRun(CoreName + ":Docked<>");
+					TryRunCommand(CoreNavigation, "Docked<>");
 					CurrentTask = ActiveTask.Refueling;
 					UpdateStatus(DroneStatus.Waiting);
 					Strategize();
@@ -1273,7 +1306,7 @@ public void Run(string argument, UpdateType updateSource)
 			SetBlocks();
 			AddPrint("Started Program", true);
 		}
-		CoreDirective.TryRun(CoreName + ":Started");
+		TryRunCommand(CoreDirective, "Started");
 		AddPrint("Responded to Core Directive", true);
 		if(Changed_ID){
 			string ShipClass = ShipName;
@@ -1335,8 +1368,10 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
-	argument_history.Add(argument);
+	if(argument.Length > 0)
+		argument_history.Add(argument);
 	try{
+		RunOldCommands();
 		Run(argument, updateSource);
 	}
 	catch(Exception e){

@@ -1,5 +1,18 @@
 //Havok Core programming information
 
+public struct ProgRunTuple{
+	IMyProgrammableBlock Block;
+	string Command;
+	public ProgRunTuple(IMyProgrammableBlock b, string c){
+		Block = b;
+		Command = c;
+	}
+	public ProgRunTuple(){
+		Block = null;
+		Command = "";
+	}
+}
+
 private string GetCoreName(){
 	string name = Me.CustomName;
 	if(name.Contains("New ")){
@@ -33,6 +46,26 @@ private List<string> argument_history = new List<string>();
 private bool BlocksSet = false;
 private long Cycle = 0;
 private long Long_Cycle = 1;
+private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
+
+private void RunOldCommands(){
+	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
+	foreach(ProgRunTuple tuple in programs_to_run){
+		if(!TryRunCommand(tuple.Block, tuple.Command){
+			new_progs.Add(tuple);
+		}
+	}
+	programs_to_run = new_progs;
+}
+
+private bool TryRunCommand(IMyProgrammableBlock block, string command){
+	if(block.IsRunning){
+		programs_to_run.Add(new ProgRunTuple(block, command));
+		return false;
+	}
+	block.TryRun(CoreName + ":" + command);
+	return true;
+}
 
 private void AddPrint(string message, bool AddToHistory){
 	toEcho += message + '\n';
@@ -264,7 +297,6 @@ public bool CheckValidID(){
 
 public void Run(string argument, UpdateType updateSource)
 {
-	argument_history.Add(argument);
 	if(argument.Equals("CoreDirective:Reset")){
 		Reset();
 		FinalPrint();
@@ -281,7 +313,7 @@ public void Run(string argument, UpdateType updateSource)
 			SetBlocks();
 			AddPrint("Started Program", true);
 		}
-		CoreDirective.TryRun(CoreName + ":Started");
+		TryRunCommand(CoreDirective, "Started");
 		AddPrint("Responded to Core Directive", true);
 		FinalPrint();
 		return;
@@ -319,7 +351,10 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
+	if(argument.Length > 0)
+		argument_history.Add(argument);
 	try{
+		RunOldCommands();
 		Run(argument, updateSource);
 	}
 	catch(Exception e){

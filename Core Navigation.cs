@@ -1,5 +1,18 @@
 //Havok Core programming information
 
+public struct ProgRunTuple{
+	IMyProgrammableBlock Block;
+	string Command;
+	public ProgRunTuple(IMyProgrammableBlock b, string c){
+		Block = b;
+		Command = c;
+	}
+	public ProgRunTuple(){
+		Block = null;
+		Command = "";
+	}
+}
+
 public struct VTuple{
 	public Vector3D Item1;
 	public Vector3D Item2;
@@ -44,6 +57,26 @@ private long Cycle = 0;
 private long Long_Cycle = 1;
 private long Days = 0;
 private long Seconds = 0;
+private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
+
+private void RunOldCommands(){
+	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
+	foreach(ProgRunTuple tuple in programs_to_run){
+		if(!TryRunCommand(tuple.Block, tuple.Command){
+			new_progs.Add(tuple);
+		}
+	}
+	programs_to_run = new_progs;
+}
+
+private bool TryRunCommand(IMyProgrammableBlock block, string command){
+	if(block.IsRunning){
+		programs_to_run.Add(new ProgRunTuple(block, command));
+		return false;
+	}
+	block.TryRun(CoreName + ":" + command);
+	return true;
+}
 
 private Vector3D forward_vector;
 private Vector3D upward_vector;
@@ -812,7 +845,7 @@ public void Run(string argument, UpdateType updateSource)
 			SetBlocks();
 			AddPrint("Started Program", true);
 		}
-		CoreDirective.TryRun(CoreName + ":Started");
+		TryRunCommand(CoreDirective, "Started");
 		AddPrint("Responded to Core Directive", true);
 		FinalPrint();
 		return;
@@ -913,7 +946,7 @@ public void Run(string argument, UpdateType updateSource)
 						else{
 							valid_direction = false;
 							AddPrint("Unable to dock; connector invalid", true);
-							CoreStrategy.TryRun(CoreName + ":Invalid<Connector>");
+							TryRunCommand(CoreStrategy, "Invalid<Connector>");
 						}
 						if(valid_direction){
 							double connector_distance = (CoreRemote.GetPosition() - CoreConnector.GetPosition()).Length();
@@ -931,7 +964,7 @@ public void Run(string argument, UpdateType updateSource)
 						}
 					}
 					else {
-						CoreStrategy.TryRun(CoreName + ":Missing<Connector>");
+						TryRunCommand(CoreStrategy, "Missing<Connector>");
 						AddPrint("Unable to dock; connector missing", true);
 					}
 				}
@@ -1045,11 +1078,11 @@ public void Run(string argument, UpdateType updateSource)
 					else{
 						if(Sensors.Count < 2){
 							AddPrint("Cannot perform tracking; no valid sensors", true);
-							CoreStrategy.TryRun(CoreName + ":Missing<Sensor>");
+							TryRunCommand(CoreStrategy, "Missing<Sensor>");
 						}
 						else{
 							AddPrint("Cannot perform tracking; no landing gear", true);
-							CoreStrategy.TryRun(CoreName + ":Missing<LandingGear>");
+							TryRunCommand(CoreStrategy, "Missing<LandingGear>");
 						}
 						
 					}
@@ -1087,19 +1120,19 @@ public void Run(string argument, UpdateType updateSource)
 				if(entity.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies){
 					switch(entity.Type){
 						case MyDetectedEntityType.SmallGrid:
-							CoreStrategy.TryRun(CoreName + ":HostileFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "HostileFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 							AddPrint("HostileFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							break;
 						case MyDetectedEntityType.LargeGrid:
-							CoreStrategy.TryRun(CoreName + ":HostileFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "HostileFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 							AddPrint("HostileFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							break;
 						case MyDetectedEntityType.CharacterHuman:
-							CoreStrategy.TryRun(CoreName + ":HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 							AddPrint("HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							break;
 						case MyDetectedEntityType.CharacterOther:
-							CoreStrategy.TryRun(CoreName + ":HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 							AddPrint("HostileOrganic<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							break;
 					}
@@ -1108,22 +1141,22 @@ public void Run(string argument, UpdateType updateSource)
 					switch(entity.Type){
 						case MyDetectedEntityType.SmallGrid:
 							if(entity.Relationship != MyRelationsBetweenPlayerAndBlock.Owner && entity.Relationship != MyRelationsBetweenPlayerAndBlock.FactionShare && entity.Relationship != MyRelationsBetweenPlayerAndBlock.Friends){
-								CoreStrategy.TryRun(CoreName + ":ScrapFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+								TryRunCommand(CoreStrategy, "ScrapFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 								AddPrint("ScrapFighter<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							}
 							break;
 						case MyDetectedEntityType.LargeGrid:
 							if(entity.Relationship != MyRelationsBetweenPlayerAndBlock.Owner && entity.Relationship != MyRelationsBetweenPlayerAndBlock.FactionShare && entity.Relationship != MyRelationsBetweenPlayerAndBlock.Friends){
-								CoreStrategy.TryRun(CoreName + ":ScrapFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+								TryRunCommand(CoreStrategy, "ScrapFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 								AddPrint("ScrapFrigate<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							}
 							break;
 						case MyDetectedEntityType.FloatingObject:
-							CoreStrategy.TryRun(CoreName + ":ScrapObject<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "ScrapObject<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>");
 							AddPrint("ScrapObject<" + entity.EntityId + ";(" + entity.Position.ToString() + ");(" + entity.Velocity.ToString() + ")>", false);
 							break;
 						case MyDetectedEntityType.Asteroid:
-							CoreStrategy.TryRun(CoreName + ":Asteroid<" + entity.EntityId + ";(" + entity.Position.ToString() + ")>");
+							TryRunCommand(CoreStrategy, "Asteroid<" + entity.EntityId + ";(" + entity.Position.ToString() + ")>");
 							AddPrint("Asteroid<" + entity.EntityId + ";(" + entity.Position.ToString() + ")>", false);
 							break;
 					}
@@ -1135,7 +1168,7 @@ public void Run(string argument, UpdateType updateSource)
 				Vector3D last_direction = position_history[position_history.Count-2].Item2;
 				if((current_position-last_position).Length() > 1 || GetAngle(forward_vector, last_direction) > 5){
 					AddPrint("Significantly moved: " + GetTupleString(new VTuple(current_position, forward_vector)), true);
-					CoreStrategy.TryRun(CoreName + ":Report<" + GetTupleString(new VTuple(current_position, forward_vector)) + '>');
+					TryRunCommand(CoreStrategy, "Report<" + GetTupleString(new VTuple(current_position, forward_vector)) + '>');
 					found_update = true;
 				}
 				if(!CoreRemote.CurrentWaypoint.IsEmpty()){
@@ -1143,7 +1176,7 @@ public void Run(string argument, UpdateType updateSource)
 					if((current_target - CoreRemote.GetPosition()).Length() < 0.5 && (current_target - CoreRemote.GetPosition()).Length() < (current_target - position_history.Last().Item1).Length()){
 						AddPrint("Reached target coordinates: " + CoreRemote.GetPosition(), true);
 						found_update = true;
-						CoreStrategy.TryRun(CoreName + ":Reached<(" + CoreConnector.GetPosition() + ");" + (CoreConnector.GetPosition() - CoreRemote.GetPosition()).Length() + ">");
+						TryRunCommand(CoreStrategy, "Reached<(" + CoreConnector.GetPosition() + ");" + (CoreConnector.GetPosition() - CoreRemote.GetPosition()).Length() + ">");
 					}
 				}
 				if(found_update){
@@ -1157,7 +1190,7 @@ public void Run(string argument, UpdateType updateSource)
 				In_Gravity = true;
 				Vector3D Gravity = CoreRemote.GetNaturalGravity();
 				AddPrint("Caught in Gravity Well: (" + Gravity.ToString() + ')', true);
-				CoreStrategy.TryRun(CoreName + ":Gravity<(" + Gravity.ToString() + ")>");
+				TryRunCommand(CoreStrategy, "Gravity<(" + Gravity.ToString() + ")>");
 			}
 			else if(In_Gravity && CoreRemote.GetNaturalGravity().Length() <= 0.01){
 				In_Gravity = false;
@@ -1171,8 +1204,10 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
-	argument_history.Add(argument);
+	if(argument.Length > 0)
+		argument_history.Add(argument);
 	try{
+		RunOldCommands();
 		Run(argument, updateSource);
 	}
 	catch(Exception e){

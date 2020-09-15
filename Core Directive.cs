@@ -3,6 +3,18 @@
 //private List<string> Listener_Tags;
 //private List<string> Critical_Components;
 
+public struct ProgRunTuple{
+	IMyProgrammableBlock Block;
+	string Command;
+	public ProgRunTuple(IMyProgrammableBlock b, string c){
+		Block = b;
+		Command = c;
+	}
+	public ProgRunTuple(){
+		Block = null;
+		Command = "";
+	}
+}
 
 private string GetCoreName(){
 	string name = Me.CustomName;
@@ -41,6 +53,26 @@ private bool Started_Navigation = false;
 private bool Started_Diagnostics = false;
 private bool Started_Communications = false;
 private int TryCount = 0;
+private List<ProgRunTuple> programs_to_run = new List<ProgRunTuple>();
+
+private void RunOldCommands(){
+	List<ProgRunTuple> new_progs = new List<ProgRunTuple>();
+	foreach(ProgRunTuple tuple in programs_to_run){
+		if(!TryRunCommand(tuple.Block, tuple.Command){
+			new_progs.Add(tuple);
+		}
+	}
+	programs_to_run = new_progs;
+}
+
+private bool TryRunCommand(IMyProgrammableBlock block, string command){
+	if(block.IsRunning){
+		programs_to_run.Add(new ProgRunTuple(block, command));
+		return false;
+	}
+	block.TryRun(CoreName + ":" + command);
+	return true;
+}
 
 private bool AllStarted(){
 	return Started_Strategy && Started_Navigation && Started_Diagnostics && Started_Communications;
@@ -131,28 +163,28 @@ public void SetBlocks(bool retry){
 						CoreStrategy = AllProgBlocks[i];
 						CoreStrategy.CustomData = CoreIdentification;
 						CoreStrategy.CustomName = "Core Strategy Processor";
-						CoreStrategy.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+						TryRunCommand(CoreStrategy, "Set<" + CoreIdentification + '>');
 						AddPrint("Found " + CoreStrategy.CustomName + " at " + distance.ToString() + " meters from Core Directive\nSet CoreIdentification for " + CoreStrategy.CustomName, true);
 					}
 					else if(AllProgBlocks[i].CustomName.Contains("Core Navigation Processor")){
 						CoreNavigation = AllProgBlocks[i];
 						CoreNavigation.CustomData = CoreIdentification;
 						CoreNavigation.CustomName = "Core Navigation Processor";
-						CoreNavigation.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+						TryRunCommand(CoreNavigation, "Set<" + CoreIdentification + '>');
 						AddPrint("Found " + CoreNavigation.CustomName + " at " + distance.ToString() + " meters from Core Directive\nSet CoreIdentification for " + CoreNavigation.CustomName, true);
 					}
 					else if(AllProgBlocks[i].CustomName.Contains("Core Diagnostics Processor")){
 						CoreDiagnostics = AllProgBlocks[i];
 						CoreDiagnostics.CustomData = CoreIdentification;
 						CoreDiagnostics.CustomName = "Core Diagnostics Processor";
-						CoreDiagnostics.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+						TryRunCommand(CoreDiagnostics, "Set<" + CoreIdentification + '>');
 						AddPrint("Found " + CoreDiagnostics.CustomName + " at " + distance.ToString() + " meters from Core Directive\nSet CoreIdentification for " + CoreDiagnostics.CustomName, true);
 					}
 					else if(AllProgBlocks[i].CustomName.Contains("Core Communications Processor")){
 						CoreCommunications = AllProgBlocks[i];
 						CoreCommunications.CustomData = CoreIdentification;
 						CoreCommunications.CustomName = "Core Communications Processor";
-						CoreCommunications.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+						TryRunCommand(CoreCommunications, "Set<" + CoreIdentification + '>');
 						AddPrint("Found " + CoreCommunications.CustomName + " at " + distance.ToString() + " meters from Core Directive\nSet CoreIdentification for " + CoreCommunications.CustomName, true);
 					}
 				}
@@ -275,16 +307,16 @@ public void SetBlocks(bool retry){
 				}
 			}
 			if(set_strategy){
-				CoreStrategy.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+				TryRunCommand(CoreStrategy, "Set<" + CoreIdentification + '>');
 			}
 			if(set_navigation){
-				CoreNavigation.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+				TryRunCommand(CoreNavigation, "Set<" + CoreIdentification + '>');
 			}
 			if(set_diagnostics){
-				CoreDiagnostics.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+				TryRunCommand(CoreDiagnostics, "Set<" + CoreIdentification + '>');
 			}
 			if(set_communications){
-				CoreCommunications.TryRun(CoreName + ":Set<" + CoreIdentification + '>');
+				TryRunCommand(CoreCommunications, "Set<" + CoreIdentification + '>');
 			}
 			string exception_message = "";
 			bool exception = false;
@@ -318,10 +350,10 @@ public void SetBlocks(bool retry){
 			}
 			AddPrint("Set object references to all 5 Cores", true);
 		}
-		CoreStrategy.TryRun(CoreName + ":Start");
-		CoreNavigation.TryRun(CoreName + ":Start");
-		CoreDiagnostics.TryRun(CoreName + ":Start");
-		CoreCommunications.TryRun(CoreName + ":Start");
+		TryRunCommand(CoreStrategy, "Start");
+		TryRunCommand(CoreNavigation, "Start");
+		TryRunCommand(CoreDiagnostics, "Start");
+		TryRunCommand(CoreCommunications, "Start");
 		Started_Strategy = false;
 		Started_Navigation = false;
 		Started_Diagnostics = false;
@@ -458,22 +490,22 @@ public void Run(string argument, UpdateType updateSource)
 			if(CoreStrategy!=null){
 				CoreStrategy.CustomData="";
 				CoreStrategy.CustomName="New Core Strategy Processor";
-				CoreStrategy.TryRun(CoreName + ":Reset");
+				TryRunCommand(CoreStrategy, "Reset");
 			}
 			if(CoreNavigation!=null){
 				CoreNavigation.CustomData="";
 				CoreNavigation.CustomName="New Core Navigation Processor";
-				CoreNavigation.TryRun(CoreName + ":Reset");
+				TryRunCommand(CoreNavigation, "Reset");
 			}
 			if(CoreDiagnostics!=null){
 				CoreDiagnostics.CustomData="";
 				CoreDiagnostics.CustomName="New Core Diagnostics Processor";
-				CoreDiagnostics.TryRun(CoreName + ":Reset");
+				TryRunCommand(CoreDiagnostics, "Reset");
 			}
 			if(CoreCommunications!=null){
 				CoreCommunications.CustomData="";
 				CoreCommunications.CustomName="New Core Communications Processor";
-				CoreCommunications.TryRun(CoreName + ":Reset");
+				TryRunCommand(CoreCommunications, "Reset");
 			}
 			CoreDirective.CustomData="";
 			CoreDirective.CustomName="New Core Directive Processor";
@@ -557,25 +589,25 @@ public void Run(string argument, UpdateType updateSource)
 			AddPrint("Stopped Updating", true);
 		} else {
 			if(!Started_Strategy){
-				CoreStrategy.TryRun(CoreName + ":Start");
+				TryRunCommand(CoreStrategy, "Start");
 				AddPrint("Attempting to start Core Strategy...", false);
 			} else{
 				AddPrint("Core Strategy is Active", false);
 			}
 			if(!Started_Navigation){
-				CoreNavigation.TryRun(CoreName + ":Start");
+				TryRunCommand(CoreNavigation, "Start");
 				AddPrint("Attempting to start Core Navigation...", false);
 			} else{
 				AddPrint("Core Navigation is Active", false);
 			}
 			if(!Started_Diagnostics){
-				CoreDiagnostics.TryRun(CoreName + ":Start");
+				TryRunCommand(CoreDiagnostics, "Start");
 				AddPrint("Attempting to start Core Diagnostics...", false);
 			} else{
 				AddPrint("Core Diagnostics is Active", false);
 			}
 			if(!Started_Communications){
-				CoreCommunications.TryRun(CoreName + ":Start");
+				TryRunCommand(CoreCommunications, "Start");
 				AddPrint("Attempting to start Core Communications...", false);
 			} else{
 				AddPrint("Core Communications is Active", false);
@@ -586,8 +618,10 @@ public void Run(string argument, UpdateType updateSource)
 }
 
 public void Main(string argument, UpdateType updateSource){
-	argument_history.Add(argument);
+	if(argument.Length > 0)
+		argument_history.Add(argument);
 	try{
+		RunOldCommands();
 		Run(argument, updateSource);
 	}
 	catch(Exception e){
