@@ -969,7 +969,7 @@ public void Main(string argument, UpdateType updateSource)
 					PerformFollowing();
 				}
 				else if(Command.ToLower().Equals("tracking")){
-					if(AllSensors.Count > 1 && LandingGear.Count > 0){
+					if(Sensors.Count > 1 && LandingGear.Count > 0){
 						start = 0;
 						end = Data.Substring(start).IndexOf(';');
 						tracking_ID = Int64.Parse(Data.Substring(start,end).Trim());
@@ -1000,12 +1000,12 @@ public void Main(string argument, UpdateType updateSource)
 						PerformFollowing();
 					}
 					else{
-						if(AllSensors.Count < 2){
-							AddPrint("Cannot perform tracking; no valid sensors");
+						if(Sensors.Count < 2){
+							AddPrint("Cannot perform tracking; no valid sensors", true);
 							CoreStrategy.TryRun(CoreName + ":Missing<Sensor>");
 						}
 						else{
-							AddPrint("Cannot perform tracking; no landing gear");
+							AddPrint("Cannot perform tracking; no landing gear", true);
 							CoreStrategy.TryRun(CoreName + ":Missing<LandingGear>");
 						}
 						
@@ -1032,8 +1032,11 @@ public void Main(string argument, UpdateType updateSource)
 			FillDetectedEntities();
 			foreach(MyDetectedEntityInfo entity in detected_entities){
 				if(tracking){
-					if(tracking_ID != 0 && tracking_ID == tracking_entity.EntityId){
-						follow_position = entity.HitPosition;
+					if(tracking_ID != 0 && tracking_ID == entity.EntityId){
+						if(entity.HitPosition != null)
+							follow_position = (Vector3D) entity.HitPosition;
+						else
+							follow_position = entity.Position;
 						follow_velocity = entity.Velocity;
 						PerformTracking();
 					}
