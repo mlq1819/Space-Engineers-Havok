@@ -80,7 +80,7 @@ public void SetBlocks(bool retry){
 				return;
 			}
 		}
-		if(Me.CustomData == "" && CoreIdentification.Equals("")){ //fresh processor; because this is the directive program, it sets up the identification for all other processors
+		if(!retry || (Me.CustomData == "" && CoreIdentification.Equals(""))){ //fresh processor; because this is the directive program, it sets up the identification for all other processors
 			retry = false;
 			Random rnd = new Random();
 			CoreIdentification = Me.CubeGrid.CustomName + '-' + rnd.Next(1, Int32.MaxValue).ToString();
@@ -159,6 +159,9 @@ public void SetBlocks(bool retry){
 				FinalPrint();
 				BlocksSet = false;
 				return;
+			}
+			else {
+				AddPrint("Valid ID number: " + CoreIDNumber, true);
 			}
 			List<IMyProgrammableBlock> AllProgBlocks = new List<IMyProgrammableBlock>();
 			GridTerminalSystem.GetBlocksOfType<IMyProgrammableBlock>(AllProgBlocks);
@@ -314,6 +317,7 @@ public void SetBlocks(bool retry){
 				CoreDirective.CustomName = "New " + CoreDirective.CustomName;
 			}
 			CoreIdentification = "";
+			Me.CustomData = "";
 			AddPrint("Resetting CustomNames and CoreIdentification; attempting to retry from scratch", true);
 			SetBlocks(false);
 			return;
@@ -360,6 +364,18 @@ public void Save()
 }
 
 private void Wipe(){
+	if(CoreStrategy != null){
+		CoreStrategy.TryRun("Terminal:Reset");
+	}
+	if(CoreNavigation != null){
+		CoreNavigation.TryRun("Terminal:Reset");
+	}
+	if(CoreDiagnostics != null){
+		CoreDiagnostics.TryRun("Terminal:Reset");
+	}
+	if(CoreCommunications != null){
+		CoreCommunications.TryRun("Terminal:Reset");
+	}
 	this.Storage = "";
 	Me.CustomData = "";
 	CoreIdentification = "0";
@@ -372,21 +388,31 @@ private void Wipe(){
 	Initialize();
 }
 
+public bool CheckValidID(){
+	int CoreIDNumber = 0;
+	try{
+		if(CoreIdentification.Contains('-'))
+			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+		else
+			CoreIDNumber = Int32.Parse(CoreIdentification);
+		if(CoreIDNumber == 0){
+			AddPrint("Currently in Factory Default Settings", true);
+			FinalPrint();
+			BlocksSet = false;
+		}
+	}
+	catch(FormatException e){
+		AddPrint("Invalid ID:" + CoreIdentification + "\nWiping ID...", true);
+		Wipe();
+		FinalPrint();
+	}
+}
+
 public void Run(string argument, UpdateType updateSource)
 {
+	if(!CheckValidID())
+		return;
 	if(argument.ToLower().Equals("wipe")){
-		if(CoreStrategy != null){
-			CoreStrategy.TryRun("Terminal:Reset");
-		}
-		if(CoreNavigation != null){
-			CoreNavigation.TryRun("Terminal:Reset");
-		}
-		if(CoreDiagnostics != null){
-			CoreDiagnostics.TryRun("Terminal:Reset");
-		}
-		if(CoreCommunications != null){
-			CoreCommunications.TryRun("Terminal:Reset");
-		}
 		Wipe();
 	}
 	if(argument.ToLower().Equals("reset") || argument.ToLower().Equals("terminal:reset")){

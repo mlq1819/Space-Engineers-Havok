@@ -218,19 +218,30 @@ private void Set(string argument){
 	Me.CustomData = CoreIdentification;
 }
 
+public bool CheckValidID(){
+	int CoreIDNumber = 0;
+	try{
+		if(CoreIdentification.Contains('-'))
+			CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
+		else
+			CoreIDNumber = Int32.Parse(CoreIdentification);
+		if(CoreIDNumber == 0){
+			AddPrint("Currently in Factory Default Settings", true);
+			FinalPrint();
+			BlocksSet = false;
+		}
+	}
+	catch(FormatException e){
+		AddPrint("Invalid ID:" + CoreIdentification + "\nWiping ID...", true);
+		Wipe();
+		FinalPrint();
+	}
+}
+
 public void Run(string argument, UpdateType updateSource)
 {
-	int CoreIDNumber = 0;
-	if(CoreIdentification.Contains('-'))
-		CoreIDNumber = Int32.Parse(CoreIdentification.Substring(CoreIdentification.IndexOf('-')));
-	else
-		CoreIDNumber = Int32.Parse(CoreIdentification);
-	if(CoreIDNumber == 0){
-		AddPrint("Currently in Factory Default Settings", true);
-		FinalPrint();
-		BlocksSet = false;
+	if(!CheckValidID())
 		return;
-	}
 	try{
 		if(argument.Equals("CoreDirective:Reset")){
 			Reset();
