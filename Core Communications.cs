@@ -73,7 +73,7 @@ private void FinalPrint(){
 	}
 	if(argument_history.Count > 0){
 		AddPrint("\n\n\nArgument History:", false);
-		for(int i=argument_history.Count-1; i>=0; i++){
+		for(int i=argument_history.Count-1; i>=0; i--){
 			AddPrint("\t" + argument_history[i] + "\n------------", false);
 		}
 	}
